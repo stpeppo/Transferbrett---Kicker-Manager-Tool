@@ -19,7 +19,7 @@ with open(PLAYERS, encoding="utf-8") as f:
     players_json = f.read()
 
 teams = [
-    {"id": "team%d" % i, "name": "Team %d" % i, "budget": 100, "balance": 100}
+    {"id": "team%d" % i, "name": "Team %d" % i, "budget": 100, "balance": 100, "formation": None}
     for i in range(1, 4)
 ]
 state = json.dumps(
