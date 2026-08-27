@@ -512,8 +512,15 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   // someone else's purchases/admin-status with a locally stale copy of the rest of the board.
   function touchPresence(){
     if(!myName) return;
-    STATE.presence[myToken] = {name: myName, lastSeen: Date.now()};
+    var existing = STATE.presence[myToken];
+    STATE.presence[myToken] = {name: myName, lastSeen: Date.now(), teamId: (existing && existing.teamId) || null};
     syncPresenceRemote();
+  }
+  function setMyTeam(teamId){
+    if(!myName) return;
+    if(!STATE.presence[myToken]) STATE.presence[myToken] = {name: myName, lastSeen: Date.now(), teamId: null};
+    STATE.presence[myToken].teamId = teamId || null;
+    render(); persist();
   }
   function joinPresence(name){
     name = (name||'').trim().slice(0,40);
@@ -613,6 +620,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         delete STATE.presence[tok];
       } else {
         e.name = e.name.trim().slice(0, 40);
+        if(!e.teamId || !STATE.teams.some(function(t){ return t.id===e.teamId; })) e.teamId = null;
       }
     });
   }
@@ -1417,6 +1425,13 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     nameRow.appendChild(nameInp); nameRow.appendChild(removeBtn);
     card.appendChild(nameRow);
 
+    var claimants = Object.keys(STATE.presence).filter(function(tok){ return STATE.presence[tok].teamId===team.id; }).map(function(tok){ return STATE.presence[tok].name; });
+    if(claimants.length){
+      var claimLine = document.createElement('div'); claimLine.style.fontSize='11px'; claimLine.style.color='var(--ink-dim)'; claimLine.style.marginBottom='2px';
+      claimLine.textContent = 'Gespielt von: ' + claimants.join(', ');
+      card.appendChild(claimLine);
+    }
+
     var formRow = document.createElement('div'); formRow.className='budget-line'; formRow.style.alignItems='center';
     var formLbl = document.createElement('span'); formLbl.textContent = 'Formation';
     var formSel = document.createElement('select'); formSel.className='formation-select';
@@ -1586,7 +1601,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     row.appendChild(label);
 
     var entries = Object.keys(STATE.presence).map(function(tok){
-      return {tok: tok, name: STATE.presence[tok].name, lastSeen: STATE.presence[tok].lastSeen};
+      return {tok: tok, name: STATE.presence[tok].name, lastSeen: STATE.presence[tok].lastSeen, teamId: STATE.presence[tok].teamId};
     }).sort(function(a,b){ return b.lastSeen - a.lastSeen; });
 
     if(entries.length===0){
@@ -1597,8 +1612,23 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         var pill = document.createElement('span');
         pill.className = 'presence-pill' + (e.tok===STATE.adminToken ? ' admin' : '');
         var nameSpan = document.createElement('span'); nameSpan.textContent = e.name + (e.tok===myToken ? ' (du)' : '') + (e.tok===STATE.adminToken ? ' · Admin' : '');
+        pill.appendChild(nameSpan);
+        if(e.tok===myToken){
+          var teamSel = document.createElement('select'); teamSel.className='formation-select'; teamSel.style.marginLeft='4px';
+          var noneOpt = document.createElement('option'); noneOpt.value=''; noneOpt.textContent='kein Team'; teamSel.appendChild(noneOpt);
+          STATE.teams.forEach(function(t){
+            var o = document.createElement('option'); o.value=t.id; o.textContent=t.name; teamSel.appendChild(o);
+          });
+          teamSel.value = e.teamId || '';
+          teamSel.addEventListener('click', function(ev){ ev.stopPropagation(); });
+          teamSel.addEventListener('change', function(){ setMyTeam(teamSel.value); });
+          pill.appendChild(teamSel);
+        } else if(e.teamId){
+          var teamName = STATE.teams.filter(function(t){return t.id===e.teamId;}).map(function(t){return t.name;})[0];
+          if(teamName){ var teamSpan = document.createElement('span'); teamSpan.textContent = ' · ' + teamName; pill.appendChild(teamSpan); }
+        }
         var timeSpan = document.createElement('span'); timeSpan.className='presence-time'; timeSpan.textContent = fmtAgo(e.lastSeen);
-        pill.appendChild(nameSpan); pill.appendChild(timeSpan);
+        pill.appendChild(timeSpan);
         row.appendChild(pill);
       });
     }
