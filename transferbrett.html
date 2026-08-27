@@ -316,9 +316,10 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     <div class="title-row">
       <div>
         <h1>Transferbrett</h1>
-        <div class="subtitle">kicker Managerspiel Classic · Saison 2026/27 · frei konfigurierbare Teams &amp; Budgets</div>
+        <div class="subtitle">kicker Managerspiel Classic · Saison 2026/27 · frei konfigurierbare Teams &amp; Budgets<span id="boardCodeLine"></span></div>
       </div>
       <div class="save-indicator">
+        <button class="btn small" id="copyLinkBtn">Link kopieren</button>
         <button class="btn small" id="openHistoryBtn">Verlaufsprotokoll</button>
         <button class="btn small" id="exportBtn">Stand exportieren</button>
         <button class="btn small" id="importBtn">Stand importieren</button>
@@ -420,6 +421,52 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 <script>
 (function(){
   "use strict";
+
+  // ---- require an explicit ?board=<code> so multiple simultaneous games don't collide on one link ----
+  var urlBoardParam = null;
+  try{ urlBoardParam = new URLSearchParams(window.location.search).get('board'); } catch(e){}
+  if(!urlBoardParam){
+    function sanitizeCode(v){ return (v||'').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,60); }
+    function goToBoard(code){
+      code = sanitizeCode(code);
+      if(!code) return;
+      var url = new URL(window.location.href);
+      url.searchParams.set('board', code);
+      window.location.href = url.toString();
+    }
+    function randomCode(){
+      var alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid mix-ups
+      var out = '';
+      for(var i=0;i<5;i++) out += alphabet[Math.floor(Math.random()*alphabet.length)];
+      return out;
+    }
+    var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
+    var box = document.createElement('div'); box.className='modal';
+    var h = document.createElement('h3'); h.textContent = 'Transferbrett';
+    var sub = document.createElement('div'); sub.className='modal-sub';
+    sub.textContent = 'Neues Spiel starten oder einem bestehenden Spiel per Code beitreten.';
+    box.appendChild(h); box.appendChild(sub);
+
+    var newBtn = document.createElement('button'); newBtn.className='btn primary'; newBtn.style.width='100%'; newBtn.style.marginBottom='16px';
+    newBtn.textContent = 'Neues Spiel starten';
+    newBtn.addEventListener('click', function(){ goToBoard(randomCode()); });
+    box.appendChild(newBtn);
+
+    var joinLbl = document.createElement('label'); joinLbl.textContent='Spiel-Code';
+    var joinRow = document.createElement('div'); joinRow.style.display='flex'; joinRow.style.gap='8px';
+    var joinInput = document.createElement('input'); joinInput.type='text'; joinInput.placeholder='z. B. K3F9R'; joinInput.style.flex='1';
+    joinInput.style.cssText += 'padding:9px 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink);';
+    var joinBtn = document.createElement('button'); joinBtn.className='btn small'; joinBtn.textContent='Beitreten';
+    joinBtn.addEventListener('click', function(){ goToBoard(joinInput.value); });
+    joinInput.addEventListener('keydown', function(ev){ if(ev.key==='Enter') goToBoard(joinInput.value); });
+    joinRow.appendChild(joinInput); joinRow.appendChild(joinBtn);
+    box.appendChild(joinLbl); box.appendChild(joinRow);
+
+    backdrop.appendChild(box);
+    document.body.appendChild(backdrop);
+    return;
+  }
+
   var BASE_PLAYERS = JSON.parse(document.getElementById('players-data').textContent);
   var PLAYERS = [];
   var PBY = {};
@@ -459,11 +506,14 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   var myName = null;
   try{ myName = localStorage.getItem(MY_NAME_KEY) || null; } catch(e){ myName = null; }
 
-  // Refresh my own presence entry; called right before every publish so "zuletzt aktiv" stays honest
-  // without needing extra, unprompted publishes of its own (which could race real edits).
+  // Refresh my own presence entry; called right before every publish so "zuletzt aktiv" stays honest.
+  // Presence is synced to its own Firebase path (see syncPresenceRemote below), separate from the
+  // shared game state, so that a harmless "I'm still here" update from any viewer can never overwrite
+  // someone else's purchases/admin-status with a locally stale copy of the rest of the board.
   function touchPresence(){
     if(!myName) return;
     STATE.presence[myToken] = {name: myName, lastSeen: Date.now()};
+    syncPresenceRemote();
   }
   function joinPresence(name){
     name = (name||'').trim().slice(0,40);
@@ -606,25 +656,57 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     return 'default';
   }
   var BOARD_ID = getBoardId();
+  document.getElementById('boardCodeLine').textContent = ' · Spiel-Code: ' + BOARD_ID;
+  document.getElementById('copyLinkBtn').addEventListener('click', function(){
+    var url = window.location.href;
+    var done = function(){ openInfoModal('Link kopiert – einfach an Mitspieler weitergeben:\n' + url); };
+    var fail = function(){ openInfoModal('Konnte nicht automatisch kopieren. Link zum Weitergeben:\n' + url); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(done).catch(fail);
+    } else { fail(); }
+  });
 
-  function applyRemoteState(remote){
-    STATE = remote;
+  // Core game state (teams, purchases, history, admin-status, ...) — everything EXCEPT presence.
+  // Presence lives in its own path so it can be written independently (see below).
+  function coreStateForSync(){
+    var copy = {};
+    for(var k in STATE){ if(k !== 'presence') copy[k] = STATE[k]; }
+    return copy;
+  }
+  function applyRemoteCoreState(remoteCore){
+    var presence = STATE.presence;
+    STATE = remoteCore;
+    STATE.presence = presence || {};
     normalizeState();
     recomputeSequences();
     render();
     saveLocal();
   }
+  function applyRemotePresence(remotePresence){
+    STATE.presence = remotePresence || {};
+    normalizeState();
+    render();
+    saveLocal();
+  }
 
   var boardRef = null;
+  var stateRef = null;
+  var presenceRef = null;
+
+  function syncPresenceRemote(){
+    if(!presenceRef || !myName) return;
+    presenceRef.child(myToken).set({name: myName, lastSeen: Date.now()}).catch(function(){});
+  }
+
   function persist(){
     touchPresence();
-    if(!boardRef){
+    if(!stateRef){
       var ok = saveLocal();
       setSave(ok?'ok':'', ok ? 'lokal im Browser gespeichert' : 'nicht gespeichert (kein Speichern verfügbar)');
       return;
     }
     setSave('busy', 'speichere…');
-    boardRef.set(STATE).then(function(){
+    stateRef.set(coreStateForSync()).then(function(){
       saveLocal();
       setSave('ok', 'live gespeichert');
     }).catch(function(){
@@ -637,25 +719,31 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     if(window.firebase && FIREBASE_CONFIG.apiKey){
       firebase.initializeApp(FIREBASE_CONFIG);
       boardRef = firebase.database().ref('boards/' + BOARD_ID);
+      stateRef = boardRef.child('state');
+      presenceRef = boardRef.child('presence');
       setSave('busy', 'verbinde…');
-      boardRef.on('value', function(snapshot){
-        var remote = snapshot.val();
-        if(remote === null){
-          boardRef.set(STATE).then(function(){ setSave('ok', 'neues Board angelegt'); })
+      stateRef.on('value', function(snapshot){
+        var remoteCore = snapshot.val();
+        if(remoteCore === null){
+          stateRef.set(coreStateForSync()).then(function(){ setSave('ok', 'neues Board angelegt'); })
             .catch(function(){ setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert'); saveLocal(); });
           return;
         }
-        applyRemoteState(remote);
+        applyRemoteCoreState(remoteCore);
         setSave('ok', 'live synchronisiert');
       }, function(){
-        boardRef = null;
+        stateRef = null;
         setSave('err', 'Online-Verbindung fehlgeschlagen, lokal gesichert');
       });
+      presenceRef.on('value', function(snapshot){
+        applyRemotePresence(snapshot.val());
+      }, function(){ /* presence sync is best-effort, ignore errors */ });
     } else {
       setSave('', 'Offline-Modus: wird lokal im Browser gespeichert');
     }
   } catch(e){
-    boardRef = null;
+    stateRef = null;
+    presenceRef = null;
     setSave('', 'Offline-Modus: wird lokal im Browser gespeichert');
   }
 
