@@ -320,7 +320,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       </div>
       <div class="save-indicator">
         <button class="btn small" id="openHistoryBtn">Verlaufsprotokoll</button>
-        <button class="btn small" id="exportBtn" style="display:none;">Stand exportieren</button>
+        <button class="btn small" id="exportBtn">Stand exportieren</button>
         <button class="btn small" id="importBtn">Stand importieren</button>
         <input type="file" id="importFile" accept="application/json" style="display:none;">
         <span class="save-dot" id="saveDot"></span><span id="saveText">bereit</span>
@@ -413,6 +413,8 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
 <div id="modalRoot"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script id="state-data" type="application/json">__STATE_JSON__</script>
 <script id="players-data" type="application/json">__PLAYERS_JSON__</script>
 <script>
@@ -423,19 +425,6 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   var PBY = {};
 
   var STATE = JSON.parse(document.getElementById('state-data').textContent);
-
-  // ---- capture pristine template BEFORE any dynamic rendering ----
-  var PRISTINE = '<!doctype html>\n' + document.documentElement.outerHTML;
-  var OPEN_TAG = '<script id="state-data" type="application/json">';
-  var CLOSE_TAG = '<'+'/script>';
-  var openIdx = PRISTINE.indexOf(OPEN_TAG) + OPEN_TAG.length;
-  var closeIdx = PRISTINE.indexOf(CLOSE_TAG, openIdx);
-  var DOC_HEAD = PRISTINE.slice(0, openIdx);
-  var DOC_TAIL = PRISTINE.slice(closeIdx);
-
-  function buildDoc(state){
-    return DOC_HEAD + JSON.stringify(state) + DOC_TAIL;
-  }
 
   var POS_LABEL = {TW:'Torwart', ABW:'Abwehr', MF:'Mittelfeld', ST:'Sturm'};
   var POS_ORDER = ['TW','ABW','MF','ST'];
@@ -578,15 +567,18 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     });
   }
   normalizeState();
-  var historySeq = STATE.history.reduce(function(m,h){ return Math.max(m, h.id||0); }, 0);
-  var teamSeq = STATE.teams.length;
+  var historySeq, teamSeq;
+  function recomputeSequences(){
+    historySeq = STATE.history.reduce(function(m,h){ return Math.max(m, h.id||0); }, 0);
+    teamSeq = STATE.teams.length;
+  }
+  recomputeSequences();
   var currentView = 'main';
   function applyView(){
     document.getElementById('mainView').style.display = currentView==='main' ? '' : 'none';
     document.getElementById('historyView').style.display = currentView==='history' ? '' : 'none';
   }
 
-  var claudeArtifact = null;
   function setSave(mode, text){
     var dot = document.getElementById('saveDot');
     dot.className = 'save-dot ' + mode;
@@ -595,53 +587,92 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   function saveLocal(){
     try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); return true; } catch(e){ return false; }
   }
+
+  // ---- shared live board via Firebase Realtime Database (jeder Browser verbindet sich direkt, kein eigener Server) ----
+  var FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAfBDIZ8iaFEN31wJaxex1F9sAyq9Y-pAk",
+    authDomain: "transferbrett---kicker-manager.firebaseapp.com",
+    databaseURL: "https://transferbrett---kicker-manager-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "transferbrett---kicker-manager",
+    storageBucket: "transferbrett---kicker-manager.firebasestorage.app",
+    messagingSenderId: "485233984763",
+    appId: "1:485233984763:web:b2679eb591989e12789c5e"
+  };
+  function getBoardId(){
+    try{
+      var v = new URLSearchParams(window.location.search).get('board');
+      if(v){ var clean = v.replace(/[^a-zA-Z0-9_-]/g,'').slice(0,60); if(clean) return clean; }
+    } catch(e){}
+    return 'default';
+  }
+  var BOARD_ID = getBoardId();
+
+  function applyRemoteState(remote){
+    STATE = remote;
+    normalizeState();
+    recomputeSequences();
+    render();
+    saveLocal();
+  }
+
+  var boardRef = null;
   function persist(){
     touchPresence();
-    if(!claudeArtifact){
+    if(!boardRef){
       var ok = saveLocal();
       setSave(ok?'ok':'', ok ? 'lokal im Browser gespeichert' : 'nicht gespeichert (kein Speichern verfügbar)');
       return;
     }
     setSave('busy', 'speichere…');
-    claudeArtifact.publish(buildDoc(STATE)).then(function(){
+    boardRef.set(STATE).then(function(){
       saveLocal();
-      setSave('ok', 'gespeichert');
-    }).catch(function(err){
+      setSave('ok', 'live gespeichert');
+    }).catch(function(){
       saveLocal();
-      if(err && err.code === 'conflict'){ setSave('err', 'Konflikt – neu geladen, bitte Aktion wiederholen'); }
-      else { setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert'); }
+      setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert');
     });
   }
-  if(window.claude && window.claude.use){
-    window.claude.use('artifact').then(function(ns){
-      claudeArtifact = ns;
-      setSave('', ns ? 'bereit' : 'Offline-Modus: wird lokal im Browser gespeichert');
-    }).catch(function(){ setSave('', 'Offline-Modus: wird lokal im Browser gespeichert'); });
-  } else {
+
+  try{
+    if(window.firebase && FIREBASE_CONFIG.apiKey){
+      firebase.initializeApp(FIREBASE_CONFIG);
+      boardRef = firebase.database().ref('boards/' + BOARD_ID);
+      setSave('busy', 'verbinde…');
+      boardRef.on('value', function(snapshot){
+        var remote = snapshot.val();
+        if(remote === null){
+          boardRef.set(STATE).then(function(){ setSave('ok', 'neues Board angelegt'); })
+            .catch(function(){ setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert'); saveLocal(); });
+          return;
+        }
+        applyRemoteState(remote);
+        setSave('ok', 'live synchronisiert');
+      }, function(){
+        boardRef = null;
+        setSave('err', 'Online-Verbindung fehlgeschlagen, lokal gesichert');
+      });
+    } else {
+      setSave('', 'Offline-Modus: wird lokal im Browser gespeichert');
+    }
+  } catch(e){
+    boardRef = null;
     setSave('', 'Offline-Modus: wird lokal im Browser gespeichert');
   }
 
-  var downloadsCap = null;
-  if(window.claude && window.claude.use){
-    window.claude.use('downloads').then(function(ns){
-      downloadsCap = ns;
-      document.getElementById('exportBtn').style.display = ns ? '' : 'none';
-    }).catch(function(){ document.getElementById('exportBtn').style.display = 'none'; });
-  }
-
   function doExport(onDone){
-    if(!downloadsCap){ if(onDone) onDone(false); return; }
-    var stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
-    downloadsCap.save({
-      filename: 'transferbrett-stand-' + stamp + '.json',
-      data: JSON.stringify(STATE, null, 2)
-    }).then(function(){
+    try{
+      var stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+      var blob = new Blob([JSON.stringify(STATE, null, 2)], {type:'application/json'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'transferbrett-stand-' + stamp + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
       if(onDone) onDone(true);
-    }).catch(function(err){
+    } catch(e){
       if(onDone) onDone(false);
-      if(err && err.code==='declined') return;
-      openInfoModal('Export fehlgeschlagen (' + (err && err.code || 'unbekannt') + '). Tipp: Nutze stattdessen "Stand importieren" auf einer anderen Version, sobald der Export wieder verfügbar ist.');
-    });
+      openInfoModal('Export fehlgeschlagen. Tipp: Nutze stattdessen "Stand importieren" auf einer anderen Version, sobald der Export wieder verfügbar ist.');
+    }
   }
   document.getElementById('exportBtn').addEventListener('click', function(){ doExport(); });
 
@@ -779,22 +810,16 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     sub.textContent = 'Das entfernt alle ' + purchasedIds().length + ' vergebenen Spieler, löscht das Verlaufsprotokoll (' + STATE.history.length + ' Einträge) und ersetzt alle ' + STATE.teams.length + ' Teams durch "Team 1", "Team 2", "Team 3" (je 100 Mio € Budget). Nicht rückgängig zu machen.';
 
     var exportRow = document.createElement('div'); exportRow.style.marginBottom='12px';
-    if(downloadsCap){
-      var exportNowBtn = document.createElement('button'); exportNowBtn.className='btn small'; exportNowBtn.style.width='100%';
-      exportNowBtn.textContent = 'Aktuellen Stand zuerst exportieren';
-      exportNowBtn.addEventListener('click', function(){
-        exportNowBtn.disabled = true; exportNowBtn.textContent = 'Exportiere…';
-        doExport(function(ok){
-          exportNowBtn.textContent = ok ? 'Exportiert ✓' : 'Export fehlgeschlagen';
-          exportNowBtn.disabled = ok;
-        });
+    var exportNowBtn = document.createElement('button'); exportNowBtn.className='btn small'; exportNowBtn.style.width='100%';
+    exportNowBtn.textContent = 'Aktuellen Stand zuerst exportieren';
+    exportNowBtn.addEventListener('click', function(){
+      exportNowBtn.disabled = true; exportNowBtn.textContent = 'Exportiere…';
+      doExport(function(ok){
+        exportNowBtn.textContent = ok ? 'Exportiert ✓' : 'Export fehlgeschlagen';
+        exportNowBtn.disabled = ok;
       });
-      exportRow.appendChild(exportNowBtn);
-    } else {
-      var hint = document.createElement('div'); hint.className='modal-sub'; hint.style.margin='0';
-      hint.textContent = 'Export ist in dieser Ansicht nicht verfügbar.';
-      exportRow.appendChild(hint);
-    }
+    });
+    exportRow.appendChild(exportNowBtn);
 
     var actions = document.createElement('div'); actions.className='modal-actions';
     var cancelBtn = document.createElement('button'); cancelBtn.className='btn small'; cancelBtn.textContent='Abbrechen';

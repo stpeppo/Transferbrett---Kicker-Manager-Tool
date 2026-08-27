@@ -14,10 +14,10 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
 - `build_transferbrett.py` – baut `transferbrett.html` aus den beiden
   obigen Dateien mit frischem Startzustand (3 leere Teams, kein Admin).
   Einfach ausfuehren: `python3 build_transferbrett.py`
-- `transferbrett.html` – die fertig gebaute, eigenstaendige Offline-Datei
-  (kann direkt im Browser geoeffnet werden; speichert dann nur lokal).
+- `transferbrett.html` – die fertig gebaute, eigenstaendige Datei (kann
+  direkt im Browser geoeffnet oder statisch gehostet werden).
 
-## Funktionsstand (26./27.08.2026)
+## Funktionsstand (26.-27.08.2026)
 
 - Auktions-Kauf mit Team-Budgets, Undo, Team-zu-Team-Handel (Verkaeufer
   bekommt vollen neuen Verkaufspreis gutgeschrieben, kann ueber Startbudget
@@ -36,18 +36,33 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
 - Anwesenheitsliste: jeder traegt einmal seinen Namen ein, alle sehen wer
   zuletzt aktiv war; Admin wird namentlich angezeigt statt nur "jemand
   anderes".
+- Formation je Team waehlbar (3-4-3, 3-5-2, 4-3-3, 4-4-2, 4-5-1, 5-3-2,
+  5-4-1) mit Ist/Soll-Anzeige je Position basierend auf dem Kader.
+- **Geteilter Live-Stand ueber Firebase Realtime Database** statt
+  claude.ai-Artefakt-Speicherung: jeder Browser verbindet sich direkt mit
+  derselben Datenbank, kein eigener Server, kein Claude-Zugriff noetig.
+  Faellt automatisch auf reines `localStorage` zurueck, wenn Firebase nicht
+  erreichbar ist. Mehrere gleichzeitige Boards moeglich ueber
+  `?board=<name>` in der URL (Standard: `default`).
+- Export laeuft jetzt als normaler Browser-Download (Blob + `<a download>`)
+  statt ueber die claude.ai-Downloads-Capability.
 
-## Offene Idee, noch nicht umgesetzt
+## Naechster Schritt: Hosting
 
-Umbau auf eine **eigene Firebase Realtime Database** statt der
-claude.ai-Artefakt-Speicherung, damit das Tool auch ausserhalb von
-claude.ai (z.B. GitHub Pages/Netlify) mit echtem geteiltem Live-Stand
-laeuft. Naechste Schritte dafuer:
+`transferbrett.html` ist noch nicht oeffentlich erreichbar. Empfehlung:
+**GitHub Pages** fuer dieses Repo aktivieren (Settings -> Pages -> Source:
+Deploy from branch -> `main`). Danach ist die Datei unter
+`https://stpeppo.github.io/Transferbrett---Kicker-Manager-Tool/transferbrett.html`
+erreichbar (kein `index.html` vorhanden, daher der volle Dateiname in der
+URL). Mitspieler brauchen dann nur diesen Link, kein Claude-Zugriff und
+kein eigenes Tool.
 
-1. Kostenloses Firebase-Projekt anlegen, Realtime Database aktivieren.
-2. `persist()`/das Laden der `STATE` im Template auf die Firebase JS-SDK
-   umstellen (ersetzt `window.claude.use('artifact')`).
-3. `transferbrett.html` irgendwo statisch hosten (GitHub Pages, Netlify, …).
+**Wichtig:** Die Firebase-Live-Sync konnte bisher nicht Ende-zu-Ende in
+einer echten Browser-Session gegen das echte Projekt getestet werden (die
+Entwicklungsumgebung, in der dieser Code entstand, hat keinen Zugriff auf
+Google-/Firebase-Domains). Vor dem ersten echten Spielabend unbedingt mit
+zwei parallel geoeffneten Browserfenstern (gleicher `?board=`-Wert)
+gegentesten.
 
 ## Testen vor jeder Veroeffentlichung
 
