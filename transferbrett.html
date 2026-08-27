@@ -691,7 +691,12 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     saveLocal();
   }
   function applyRemotePresence(remotePresence){
+    // Each browser is the sole writer of its OWN presence entry. A snapshot that raced our own
+    // in-flight write (e.g. slower mobile network) could otherwise briefly contain an older
+    // version of our entry and revert a just-made choice (like a team claim) on screen.
+    var mine = STATE.presence[myToken];
     STATE.presence = remotePresence || {};
+    if(mine) STATE.presence[myToken] = mine;
     normalizeState();
     render();
     saveLocal();
