@@ -122,6 +122,16 @@ test('auction start keeps individual budgets and includes every assigned browser
   assert.match(template, /individuellen Budgets und aktuellen Kontostände/);
 });
 
+test('auction start fixes the complete participant order by explicit selection', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /Nominierungsreihenfolge/);
+  assert.match(template, /participantOrderTokens/);
+  assert.match(template, /Reihenfolge zufällig mischen/);
+  assert.match(template, /Die Teilnehmerliste hat sich geändert/);
+  assert.doesNotMatch(template, /auctionStartNominator/);
+});
+
 test('build script inlines the reusable auction domain logic', () => {
   const buildScript = read('build_transferbrett.py');
 

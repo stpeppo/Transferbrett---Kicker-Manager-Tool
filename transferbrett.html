@@ -352,6 +352,11 @@ tbody tr.is-new td:first-child{box-shadow:inset 3px 0 0 var(--new);}
 }
 .modal .budget-hint{font-size:12px; color:var(--ink-dim); margin:-6px 0 12px;}
 .modal .budget-hint.err{color:var(--sold); font-weight:600;}
+.auction-start-modal{max-width:430px; max-height:calc(100vh - 40px); overflow:auto;}
+.auction-order-list{display:flex; flex-direction:column; gap:7px; max-height:250px; overflow:auto; margin:5px 0 10px; padding-right:3px;}
+.auction-order-row{display:grid; grid-template-columns:62px minmax(0,1fr); gap:8px; align-items:center;}
+.auction-order-position{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:700; color:var(--gold);}
+.modal .auction-order-row select{margin:0;}
 .modal-actions{display:flex; gap:8px; justify-content:flex-end;}
 
 .history-section{margin-top:26px;}
@@ -646,19 +651,25 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     state.teams.forEach(function (team) {
       if (team && typeof team.id === 'string') validTeamIds[team.id] = true;
     });
-    var participants = Object.keys(state.presence).reduce(function (result, token) {
+    var eligibleParticipants = Object.keys(state.presence).reduce(function (result, token) {
       var presence = state.presence[token];
       if (presence && validTeamIds[presence.teamId]) {
         result.push({ token: token, name: presence.name, teamId: presence.teamId });
       }
       return result;
     }, []);
-    if (participants.length === 0) fail('NO_ELIGIBLE_PARTICIPANTS');
+    if (eligibleParticipants.length === 0) fail('NO_ELIGIBLE_PARTICIPANTS');
 
-    var turnIndex = participants.findIndex(function (participant) {
-      return participant.token === options.startNominatorToken;
+    var participantByTokenMap = {};
+    eligibleParticipants.forEach(function (participant) { participantByTokenMap[participant.token] = participant; });
+    var order = options.participantOrderTokens;
+    if (!Array.isArray(order) || order.length !== eligibleParticipants.length) fail('INVALID_PARTICIPANT_ORDER');
+    var seenTokens = {};
+    var participants = order.map(function (token) {
+      if (typeof token !== 'string' || seenTokens[token] || !participantByTokenMap[token]) fail('INVALID_PARTICIPANT_ORDER');
+      seenTokens[token] = true;
+      return participantByTokenMap[token];
     });
-    if (turnIndex < 0) fail('INVALID_START_NOMINATOR');
 
     var next = clone(state);
     next.auction = {
@@ -666,8 +677,8 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       startedAt: options.now,
       endedAt: null,
       participants: participants,
-      turnIndex: turnIndex,
-      currentNominatorToken: participants[turnIndex].token,
+      turnIndex: 0,
+      currentNominatorToken: participants[0].token,
       bidIncrement: money(options.bidIncrement),
       lot: null,
       usedLotIds: [],
@@ -1434,7 +1445,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     UNAUTHORIZED_ADMIN:'Nur der aktuelle Admin darf diese Auktionsaktion ausführen.',
     SESSION_INACTIVE:'Die Auktion ist nicht mehr aktiv.',
     NO_ELIGIBLE_PARTICIPANTS:'Es ist noch niemand mit einem gültigen Team angemeldet.',
-    INVALID_START_NOMINATOR:'Die gewählte Startperson ist nicht mehr verfügbar.',
+    INVALID_PARTICIPANT_ORDER:'Die festgelegte Reihenfolge enthält nicht alle Teilnehmer genau einmal.',
     INVALID_BID_INCREMENT:'Das Gebot liegt unter dem aktuellen Mindestgebot oder ist nicht in 0,1-Mio.-Schritten angegeben.',
     NOT_CURRENT_NOMINATOR:'Nur die aktuell nominierende Person darf einen Spieler auflegen.',
     LOT_ALREADY_ACTIVE:'Auf dem Auktionsplatz liegt bereits ein Spieler.',
@@ -1842,7 +1853,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var root = document.getElementById('modalRoot');
     var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
     backdrop.addEventListener('click', function(ev){ if(ev.target===backdrop) closeModal(); });
-    var modal = document.createElement('div'); modal.className='modal';
+    var modal = document.createElement('div'); modal.className='modal auction-start-modal';
     var h = document.createElement('h3'); h.textContent='Live-Auktion starten';
     var sub = document.createElement('div'); sub.className='modal-sub';
     sub.textContent = tokens.length + ' angemeldete Person' + (tokens.length===1?'':'en') + ' mit Team werden übernommen.';
@@ -1854,14 +1865,37 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var stepInp = document.createElement('input'); stepInp.type='number'; stepInp.min='0.1'; stepInp.step='0.1'; stepInp.value='0.1';
     stepInp.id='auctionBidIncrement'; stepLbl.htmlFor=stepInp.id;
 
-    var starterLbl = document.createElement('label'); starterLbl.textContent='Erste nominierende Person';
-    var starterSel = document.createElement('select');
-    starterSel.id='auctionStartNominator'; starterLbl.htmlFor=starterSel.id;
-    var randomOpt = document.createElement('option'); randomOpt.value=''; randomOpt.textContent='Zufällig bestimmen'; starterSel.appendChild(randomOpt);
-    tokens.forEach(function(token){
+    var orderLbl = document.createElement('label'); orderLbl.textContent='Nominierungsreihenfolge';
+    var orderList = document.createElement('div'); orderList.className='auction-order-list';
+    var orderSelects = [];
+    function participantLabel(token){
       var entry = presenceSnapshot[token];
-      var team = teamById(entry.teamId);
-      var o = document.createElement('option'); o.value=token; o.textContent=entry.name + ' · ' + (team ? team.name : '?'); starterSel.appendChild(o);
+      var team = entry ? teamById(entry.teamId) : null;
+      return (entry ? entry.name : '?') + ' · ' + (team ? team.name : '?');
+    }
+    function addOrderPosition(index){
+      var row = document.createElement('div'); row.className='auction-order-row';
+      var position = document.createElement('span'); position.className='auction-order-position'; position.textContent=(index+1) + '. Platz';
+      var select = document.createElement('select'); select.setAttribute('aria-label',(index+1) + '. Position der Nominierungsreihenfolge');
+      tokens.forEach(function(token){
+        var option = document.createElement('option'); option.value=token; option.textContent=participantLabel(token); select.appendChild(option);
+      });
+      select.value=tokens[index]; select.dataset.previous=tokens[index];
+      select.addEventListener('change', function(){
+        var previous=select.dataset.previous, selected=select.value;
+        orderSelects.forEach(function(other){
+          if(other!==select && other.value===selected){ other.value=previous; other.dataset.previous=previous; }
+        });
+        select.dataset.previous=selected;
+      });
+      orderSelects.push(select); row.appendChild(position); row.appendChild(select); orderList.appendChild(row);
+    }
+    tokens.forEach(function(token,index){ addOrderPosition(index); });
+    var shuffleBtn = document.createElement('button'); shuffleBtn.type='button'; shuffleBtn.className='btn small'; shuffleBtn.textContent='Reihenfolge zufällig mischen';
+    shuffleBtn.addEventListener('click', function(){
+      var shuffled=tokens.slice();
+      for(var i=shuffled.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), tmp=shuffled[i]; shuffled[i]=shuffled[j]; shuffled[j]=tmp; }
+      orderSelects.forEach(function(select,index){ select.value=shuffled[index]; select.dataset.previous=shuffled[index]; });
     });
 
     var startError = document.createElement('div'); startError.className='budget-hint err'; startError.style.minHeight='18px';
@@ -1874,14 +1908,13 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       var currentPresenceSnapshot = presenceSnapshotForAuction();
       var currentTokens = Object.keys(currentPresenceSnapshot);
       if(currentTokens.length===0){ startError.textContent='Aktuell ist keine Person mit zugeordnetem Team anwesend.'; return; }
+      var participantOrderTokens = orderSelects.map(function(select){ return select.value; });
+      var participantSetUnchanged = currentTokens.length===participantOrderTokens.length && currentTokens.every(function(token){ return participantOrderTokens.indexOf(token)!==-1; });
+      if(!participantSetUnchanged){ startError.textContent='Die Teilnehmerliste hat sich geändert. Bitte schließe den Dialog und öffne ihn erneut, um die Reihenfolge vollständig festzulegen.'; return; }
       startError.textContent='';
-      var selectedStarter = starterSel.value;
-      var startToken = selectedStarter && currentPresenceSnapshot[selectedStarter]
-        ? selectedStarter
-        : currentTokens[Math.floor(Math.random()*currentTokens.length)];
       startBtn.disabled=true;
       runAuctionTransition('startSession', {
-        actorToken:myToken, startNominatorToken:startToken, bidIncrement:increment,
+        actorToken:myToken, participantOrderTokens:participantOrderTokens, bidIncrement:increment,
         now:Date.now(), presenceSnapshot:currentPresenceSnapshot
       }, function(){ closeModal(); setAuctionMessage('Die Live-Auktion wurde gestartet.', true); }, function(){ startBtn.disabled=false; });
     });
@@ -1889,7 +1922,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     modal.appendChild(h); modal.appendChild(sub);
     modal.appendChild(budgetHint);
     modal.appendChild(stepLbl); modal.appendChild(stepInp);
-    modal.appendChild(starterLbl); modal.appendChild(starterSel); modal.appendChild(startError); modal.appendChild(actions);
+    modal.appendChild(orderLbl); modal.appendChild(orderList); modal.appendChild(shuffleBtn); modal.appendChild(startError); modal.appendChild(actions);
     backdrop.appendChild(modal); root.appendChild(backdrop);
   }
 

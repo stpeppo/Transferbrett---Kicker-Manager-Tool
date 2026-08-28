@@ -39,7 +39,7 @@ function baseState(overrides = {}) {
 function activeSession() {
   return startSession(baseState(), {
     actorToken: 'admin-token',
-    startNominatorToken: 'alice',
+    participantOrderTokens: ['alice', 'bob'],
     bidIncrement: 0.5,
     now: 2_000,
   });
@@ -63,16 +63,16 @@ test('session start snapshots all assigned browsers and preserves every individu
   const before = baseState();
   const next = startSession(before, {
     actorToken: 'admin-token',
-    startNominatorToken: 'alice',
+    participantOrderTokens: ['bob', 'alice'],
     bidIncrement: 0.5,
     now: 2_000,
   });
 
   assert.deepEqual(next.auction.participants, [
-    { token: 'alice', name: 'Alice', teamId: 'team-a' },
     { token: 'bob', name: 'Bob', teamId: 'team-b' },
+    { token: 'alice', name: 'Alice', teamId: 'team-a' },
   ]);
-  assert.equal(next.auction.currentNominatorToken, 'alice');
+  assert.equal(next.auction.currentNominatorToken, 'bob');
   assert.equal(next.auction.bidIncrement, 0.5);
   assert.equal(next.auction.active, true);
   assert.deepEqual(
@@ -97,7 +97,7 @@ test('session start never resets budgets or balances when purchases already exis
 
   const next = startSession(before, {
     actorToken: 'admin-token',
-    startNominatorToken: 'alice',
+    participantOrderTokens: ['alice', 'bob'],
     bidIncrement: 0.5,
     now: 2_000,
   });
@@ -234,7 +234,7 @@ test('the leading team cannot raise its own bid and increments use visible tenth
   expectCode('INVALID_BID_INCREMENT', () =>
     startSession(baseState(), {
       actorToken: 'admin-token',
-      startNominatorToken: 'alice', bidIncrement: 0.15,
+      participantOrderTokens: ['alice', 'bob'], bidIncrement: 0.15,
     }),
   );
 });
@@ -421,7 +421,7 @@ test('the departing admin is handed over and the final participant ends the sess
 
 test('admin transitions reject every browser token except the current admin token', () => {
   expectCode('UNAUTHORIZED_ADMIN', () => startSession(baseState(), {
-    actorToken: 'alice', startNominatorToken: 'alice', bidIncrement: 0.5,
+    actorToken: 'alice', participantOrderTokens: ['alice', 'bob'], bidIncrement: 0.5,
   }));
   expectCode('UNAUTHORIZED_ADMIN', () => finalizeLot(activeLot(), {
     actorToken: 'alice', expectedLotId: 'lot-1',
@@ -438,22 +438,27 @@ test('admin transitions reject every browser token except the current admin toke
 test('session start rejects an existing session and invalid configuration', () => {
   expectCode('SESSION_ALREADY_ACTIVE', () =>
     startSession(activeSession(), {
-      actorToken: 'admin-token', startNominatorToken: 'alice', bidIncrement: 0.5,
+      actorToken: 'admin-token', participantOrderTokens: ['alice', 'bob'], bidIncrement: 0.5,
     }),
   );
   expectCode('INVALID_BID_INCREMENT', () =>
     startSession(baseState(), {
-      actorToken: 'admin-token', startNominatorToken: 'alice', bidIncrement: 0,
+      actorToken: 'admin-token', participantOrderTokens: ['alice', 'bob'], bidIncrement: 0,
     }),
   );
-  expectCode('INVALID_START_NOMINATOR', () =>
+  expectCode('INVALID_PARTICIPANT_ORDER', () =>
     startSession(baseState(), {
-      actorToken: 'admin-token', startNominatorToken: 'spectator', bidIncrement: 0.5,
+      actorToken: 'admin-token', participantOrderTokens: ['alice', 'spectator'], bidIncrement: 0.5,
+    }),
+  );
+  expectCode('INVALID_PARTICIPANT_ORDER', () =>
+    startSession(baseState(), {
+      actorToken: 'admin-token', participantOrderTokens: ['alice', 'alice'], bidIncrement: 0.5,
     }),
   );
   expectCode('NO_ELIGIBLE_PARTICIPANTS', () =>
     startSession(baseState({ presence: {} }), {
-      actorToken: 'admin-token', startNominatorToken: 'alice', bidIncrement: 0.5,
+      actorToken: 'admin-token', participantOrderTokens: [], bidIncrement: 0.5,
     }),
   );
 });

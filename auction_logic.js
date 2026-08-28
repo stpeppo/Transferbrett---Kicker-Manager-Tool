@@ -84,19 +84,25 @@
     state.teams.forEach(function (team) {
       if (team && typeof team.id === 'string') validTeamIds[team.id] = true;
     });
-    var participants = Object.keys(state.presence).reduce(function (result, token) {
+    var eligibleParticipants = Object.keys(state.presence).reduce(function (result, token) {
       var presence = state.presence[token];
       if (presence && validTeamIds[presence.teamId]) {
         result.push({ token: token, name: presence.name, teamId: presence.teamId });
       }
       return result;
     }, []);
-    if (participants.length === 0) fail('NO_ELIGIBLE_PARTICIPANTS');
+    if (eligibleParticipants.length === 0) fail('NO_ELIGIBLE_PARTICIPANTS');
 
-    var turnIndex = participants.findIndex(function (participant) {
-      return participant.token === options.startNominatorToken;
+    var participantByTokenMap = {};
+    eligibleParticipants.forEach(function (participant) { participantByTokenMap[participant.token] = participant; });
+    var order = options.participantOrderTokens;
+    if (!Array.isArray(order) || order.length !== eligibleParticipants.length) fail('INVALID_PARTICIPANT_ORDER');
+    var seenTokens = {};
+    var participants = order.map(function (token) {
+      if (typeof token !== 'string' || seenTokens[token] || !participantByTokenMap[token]) fail('INVALID_PARTICIPANT_ORDER');
+      seenTokens[token] = true;
+      return participantByTokenMap[token];
     });
-    if (turnIndex < 0) fail('INVALID_START_NOMINATOR');
 
     var next = clone(state);
     next.auction = {
@@ -104,8 +110,8 @@
       startedAt: options.now,
       endedAt: null,
       participants: participants,
-      turnIndex: turnIndex,
-      currentNominatorToken: participants[turnIndex].token,
+      turnIndex: 0,
+      currentNominatorToken: participants[0].token,
       bidIncrement: money(options.bidIncrement),
       lot: null,
       usedLotIds: [],
