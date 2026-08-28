@@ -456,6 +456,17 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   </div>
 
   <div id="mainView">
+    <div class="teams-section">
+      <div class="teams-head">
+        <h2>Teams</h2>
+        <div style="display:flex; gap:8px;">
+          <button class="btn small danger" id="resetBtn" style="display:none;">Zurücksetzen</button>
+          <button class="btn small primary" id="addTeamBtn">+ Team hinzufügen</button>
+        </div>
+      </div>
+      <div class="teams-grid" id="teamsGrid"></div>
+    </div>
+
     <section class="auction-section" id="auctionPanel">
       <div class="auction-head">
         <div>
@@ -487,17 +498,6 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         <div class="auction-offline" id="auctionOffline" style="display:none;">Live-Auktionen benötigen eine aktive Firebase-Verbindung.</div>
       </div>
     </section>
-
-    <div class="teams-section">
-      <div class="teams-head">
-        <h2>Teams</h2>
-        <div style="display:flex; gap:8px;">
-          <button class="btn small danger" id="resetBtn" style="display:none;">Zurücksetzen</button>
-          <button class="btn small primary" id="addTeamBtn">+ Team hinzufügen</button>
-        </div>
-      </div>
-      <div class="teams-grid" id="teamsGrid"></div>
-    </div>
 
     <div class="table-wrap" id="tableWrap">
       <table>

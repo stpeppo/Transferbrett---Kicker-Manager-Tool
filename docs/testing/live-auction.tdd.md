@@ -14,7 +14,7 @@ The journeys were derived from the approved conversation plan; no separate plan 
 | Task | Test target | RED evidence | GREEN evidence |
 |---|---|---|---|
 | Auction domain transitions | `tests/auction_logic.test.js` | `node --test tests/auction_logic.test.js` failed with `Cannot find module '../auction_logic'` before production logic existed; the later leave-session tests failed until that transition was added. | 20 domain tests pass after `auction_logic.js`, its authorization guards, and active leave handling were implemented. |
-| Build and UI integration | `tests/auction_build_integration.test.js` | Three assertions failed because the panel, controls, build placeholder, and inlined logic did not yet exist. | All ten integration checks pass after rebuilding `transferbrett.html`. |
+| Build and UI integration | `tests/auction_build_integration.test.js` | Three assertions failed because the panel, controls, build placeholder, and inlined logic did not yet exist. | All eleven integration checks pass after rebuilding `transferbrett.html`. |
 | Nominator skip | `tests/auction_logic.test.js` | The new test failed with `TypeError: skipNominator is not a function`. | The same test passes after the transition was added. |
 
 ## Guarantees
@@ -36,11 +36,12 @@ The journeys were derived from the approved conversation plan; no separate plan 
 | 13 | Browser caches are isolated by game code, so a new game starts from the embedded base state. | Integration | PASS |
 | 14 | A browser can leave explicitly; nomination/admin succession remains valid and existing bids are retained. | Unit + Integration | PASS |
 | 15 | Every player row shows an auction button that is enabled only for the current nominator and an available player. | Integration | PASS |
+| 16 | The auction panel is placed directly above the player table and below the team overview. | Integration | PASS |
 
 ## Commands and coverage
 
 - Build: bundled Python `build_transferbrett.py` — PASS.
-- Tests: bundled Node `--test --experimental-test-coverage tests/auction_logic.test.js tests/auction_build_integration.test.js` — 30/30 PASS at the recorded full-suite checkpoint.
+- Tests: bundled Node `--test --experimental-test-coverage tests/auction_logic.test.js tests/auction_build_integration.test.js` — 31/31 PASS at the recorded full-suite checkpoint.
 - Domain coverage at that checkpoint: 98.17% lines, 84.62% branches, 96.77% functions.
 - Syntax: bundled Node `--check auction_logic.js` — PASS.
 

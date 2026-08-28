@@ -23,6 +23,16 @@ test('template exposes the live auction panel and its primary controls', () => {
   assert.match(template, /Aktuelles Mindestgebot/);
 });
 
+test('auction panel is positioned directly between teams and the player table', () => {
+  const template = read('transferbrett_template.html');
+  const teamsIndex = template.indexOf('id="teamsGrid"');
+  const auctionIndex = template.indexOf('id="auctionPanel"');
+  const tableIndex = template.indexOf('id="tableWrap"');
+
+  assert.ok(teamsIndex < auctionIndex);
+  assert.ok(auctionIndex < tableIndex);
+});
+
 test('auction writes are connectivity-gated and use transactional state updates', () => {
   const template = read('transferbrett_template.html');
 
