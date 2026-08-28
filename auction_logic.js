@@ -160,11 +160,11 @@
     if (auction.lot.highestTeamId === options.teamId) fail('TEAM_ALREADY_LEADING');
 
     if (!sameMoney(options.expectedCurrentBid, auction.lot.highestBid)) fail('STALE_BID');
-    if (!isFiniteNumber(options.amount)) fail('INVALID_BID_INCREMENT');
+    if (!isVisibleTenth(options.amount)) fail('INVALID_BID_INCREMENT');
     var requiredBid = auction.lot.highestBid === null
       ? auction.lot.startPrice
       : money(auction.lot.highestBid + auction.bidIncrement);
-    if (!sameMoney(options.amount, requiredBid)) fail('INVALID_BID_INCREMENT');
+    if (money(options.amount) < money(requiredBid)) fail('INVALID_BID_INCREMENT');
     if (!isFiniteNumber(team.balance) || money(options.amount) > money(team.balance)) {
       fail('INSUFFICIENT_BUDGET');
     }

@@ -197,6 +197,9 @@ h1{
 .auction-leader{font-size:12px; color:var(--ink-dim); margin-top:3px;}
 .auction-actions{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:12px;}
 .auction-bid-info{font-size:12px; color:var(--ink-dim);}
+.auction-bid-entry{display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
+.auction-bid-entry label{font-size:11px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.04em;}
+.auction-bid-entry input{width:112px; padding:8px 9px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink); font-family:"IBM Plex Mono",monospace; font-size:14px; font-weight:600;}
 .auction-admin-actions{display:flex; gap:7px; flex-wrap:wrap; margin-left:auto;}
 .auction-message{min-height:18px; margin-top:8px; font-size:12px; font-weight:600; color:var(--sold);}
 .auction-offline{margin-top:10px; padding:8px 10px; border-radius:8px; background:var(--sold-dim); color:var(--sold); font-size:12px; font-weight:600;}
@@ -468,6 +471,10 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         </div>
         <div class="auction-actions">
           <div class="auction-bid-info" id="auctionBidInfo"></div>
+          <div class="auction-bid-entry" id="auctionBidEntry" style="display:none;">
+            <label for="auctionBidAmount">Dein Gebot (Mio €)</label>
+            <input id="auctionBidAmount" type="number" min="0" step="0.1" inputmode="decimal">
+          </div>
           <button class="btn primary" id="auctionBidBtn" type="button" style="display:none;">Bieten</button>
           <div class="auction-admin-actions" id="auctionAdminActions" style="display:none;">
             <button class="btn small" id="auctionSkipBtn" type="button">Person überspringen</button>
@@ -695,11 +702,11 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     if (auction.lot.highestTeamId === options.teamId) fail('TEAM_ALREADY_LEADING');
 
     if (!sameMoney(options.expectedCurrentBid, auction.lot.highestBid)) fail('STALE_BID');
-    if (!isFiniteNumber(options.amount)) fail('INVALID_BID_INCREMENT');
+    if (!isVisibleTenth(options.amount)) fail('INVALID_BID_INCREMENT');
     var requiredBid = auction.lot.highestBid === null
       ? auction.lot.startPrice
       : money(auction.lot.highestBid + auction.bidIncrement);
-    if (!sameMoney(options.amount, requiredBid)) fail('INVALID_BID_INCREMENT');
+    if (money(options.amount) < money(requiredBid)) fail('INVALID_BID_INCREMENT');
     if (!isFiniteNumber(team.balance) || money(options.amount) > money(team.balance)) {
       fail('INSUFFICIENT_BUDGET');
     }
@@ -1341,7 +1348,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     SESSION_INACTIVE:'Die Auktion ist nicht mehr aktiv.',
     NO_ELIGIBLE_PARTICIPANTS:'Es ist noch niemand mit einem gültigen Team angemeldet.',
     INVALID_START_NOMINATOR:'Die gewählte Startperson ist nicht mehr verfügbar.',
-    INVALID_BID_INCREMENT:'Dieses Gebot entspricht nicht dem festgelegten Gebotsschritt.',
+    INVALID_BID_INCREMENT:'Das Gebot liegt unter dem aktuellen Mindestgebot oder ist nicht in 0,1-Mio.-Schritten angegeben.',
     NOT_CURRENT_NOMINATOR:'Nur die aktuell nominierende Person darf einen Spieler auflegen.',
     LOT_ALREADY_ACTIVE:'Auf dem Auktionsplatz liegt bereits ein Spieler.',
     NO_ACTIVE_LOT:'Aktuell liegt kein Spieler auf dem Auktionsplatz.',
@@ -1756,7 +1763,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var budgetHint = document.createElement('div'); budgetHint.className='budget-hint';
     budgetHint.textContent = 'Die individuellen Budgets und aktuellen Kontostände der Teams bleiben unverändert.';
 
-    var stepLbl = document.createElement('label'); stepLbl.textContent='Fester Gebotsschritt (Mio €)';
+    var stepLbl = document.createElement('label'); stepLbl.textContent='Mindeststeigerung nach einem Gebot (Mio €)';
     var stepInp = document.createElement('input'); stepInp.type='number'; stepInp.min='0.1'; stepInp.step='0.1'; stepInp.value='0.1';
     stepInp.id='auctionBidIncrement'; stepLbl.htmlFor=stepInp.id;
 
@@ -1817,11 +1824,51 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var participant = auctionParticipant(myToken);
     if(!participant) return;
     var lot = STATE.auction.lot;
-    var amount = lot.highestBid===null ? lot.startPrice : Math.round((lot.highestBid + STATE.auction.bidIncrement)*1000000)/1000000;
+    var amount = parseFloat(document.getElementById('auctionBidAmount').value);
+    if(isNaN(amount)) return;
     runAuctionTransition('placeBid', {
       token:myToken, teamId:participant.teamId, amount:amount,
       expectedCurrentBid:lot.highestBid, now:Date.now()
     });
+  }
+
+  function updateAuctionBidEntry(){
+    var bidEntry = document.getElementById('auctionBidEntry');
+    var bidInput = document.getElementById('auctionBidAmount');
+    var bidBtn = document.getElementById('auctionBidBtn');
+    var bidInfo = document.getElementById('auctionBidInfo');
+    if(!auctionLotActive()){
+      bidEntry.style.display='none'; bidBtn.style.display='none'; return;
+    }
+    var participant = auctionParticipant(myToken);
+    if(!participant){
+      bidEntry.style.display='none'; bidBtn.style.display='none';
+      bidInfo.textContent='Dieser Browser war beim Auktionsstart keinem teilnehmenden Team zugeordnet.';
+      return;
+    }
+    var lot = STATE.auction.lot;
+    var participantTeam = teamById(participant.teamId);
+    var minimum = lot.highestBid===null ? lot.startPrice : Math.round((lot.highestBid + STATE.auction.bidIncrement)*1000000)/1000000;
+    var remaining = participantTeam ? participantTeam.balance : 0;
+    var revision = lot.id + '|' + String(lot.highestBid);
+    if(bidInput.dataset.lotRevision!==revision){
+      bidInput.dataset.lotRevision=revision;
+      bidInput.value=minimum.toFixed(1);
+    }
+    bidInput.min=minimum.toFixed(1);
+    bidInput.max=remaining.toFixed(1);
+    var amount = parseFloat(bidInput.value);
+    var validTenth = !isNaN(amount) && Math.abs(amount*10-Math.round(amount*10))<0.000001;
+    var ownTeamLeads = lot.highestTeamId===participant.teamId;
+    var unavailable = auctionBusy || !stateRef || !firebaseConnected;
+    bidEntry.style.display='flex'; bidBtn.style.display=''; bidBtn.textContent='Gebot abgeben';
+    bidInput.disabled = unavailable || ownTeamLeads;
+    bidBtn.disabled = unavailable || ownTeamLeads || !validTenth || amount<minimum || amount>remaining;
+    if(ownTeamLeads) bidInfo.textContent=(participantTeam ? participantTeam.name : 'Dein Team') + ' führt bereits mit ' + fmtMio(lot.highestBid) + '.';
+    else if(!validTenth) bidInfo.textContent='Bitte gib dein Gebot in Schritten von 0,1 Mio. € ein.';
+    else if(amount<minimum) bidInfo.textContent='Das aktuelle Mindestgebot beträgt ' + fmtMio(minimum) + '.';
+    else if(amount>remaining) bidInfo.textContent='Nicht genug Budget: verfügbar ' + fmtMio(remaining) + '.';
+    else bidInfo.textContent='Für ' + (participantTeam ? participantTeam.name : 'dein Team') + ' · danach verbleiben ' + fmtMio(remaining-amount) + '.';
   }
 
   function finalizeAuctionLot(){
@@ -2510,6 +2557,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var lotContent = document.getElementById('auctionLotContent');
     var meta = document.getElementById('auctionSessionMeta');
     var bidBtn = document.getElementById('auctionBidBtn');
+    var bidEntry = document.getElementById('auctionBidEntry');
     var bidInfo = document.getElementById('auctionBidInfo');
     var adminActions = document.getElementById('auctionAdminActions');
     var skipBtn = document.getElementById('auctionSkipBtn');
@@ -2534,7 +2582,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       pill.textContent = participant.name + ' · ' + (team ? team.name : '?') + (participant.token===STATE.auction.currentNominatorToken ? ' · nominiert' : '');
       meta.appendChild(pill);
     });
-    var stepPill = document.createElement('span'); stepPill.className='auction-person'; stepPill.textContent='Gebotsschritt: ' + fmtMio(STATE.auction.bidIncrement); meta.appendChild(stepPill);
+    var stepPill = document.createElement('span'); stepPill.className='auction-person'; stepPill.textContent='Mindeststeigerung: ' + fmtMio(STATE.auction.bidIncrement); meta.appendChild(stepPill);
 
     var lot = STATE.auction.lot;
     var nominator = currentNominator();
@@ -2547,6 +2595,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     cancelBtn.style.display = lot ? '' : 'none';
     finalizeBtn.style.display = lot ? '' : 'none';
     bidBtn.style.display = 'none';
+    bidEntry.style.display = 'none';
     bidInfo.textContent = '';
 
     if(!lot){
@@ -2569,29 +2618,16 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var playerMeta = document.createElement('div'); playerMeta.className='auction-player-meta';
     playerMeta.textContent = p ? (p.c + ' · ' + POS_LABEL[p.p] + ' · Marktwert ' + fmtEUR(p.v)) : 'Live-Auktion';
     playerSide.appendChild(playerName); playerSide.appendChild(playerMeta);
+    var currentMinimum = lot.highestBid===null ? lot.startPrice : Math.round((lot.highestBid + STATE.auction.bidIncrement)*1000000)/1000000;
     var priceSide = document.createElement('div'); priceSide.className='auction-price';
-    var priceLabel = document.createElement('div'); priceLabel.className='auction-price-label'; priceLabel.textContent=lot.highestBid===null ? 'Startpreis' : 'Höchstgebot';
-    var priceValue = document.createElement('div'); priceValue.className='auction-price-value'; priceValue.textContent=fmtMio(lot.highestBid===null ? lot.startPrice : lot.highestBid);
+    var priceLabel = document.createElement('div'); priceLabel.className='auction-price-label'; priceLabel.textContent='Aktuelles Mindestgebot';
+    var priceValue = document.createElement('div'); priceValue.className='auction-price-value'; priceValue.textContent=fmtMio(currentMinimum);
     var leader = document.createElement('div'); leader.className='auction-leader';
-    leader.textContent = leaderTeam ? (leaderTeam.name + ' führt · ' + (lot.bidCount||0) + ' Gebote') : 'Noch kein Gebot';
+    leader.textContent = leaderTeam ? (leaderTeam.name + ' führt mit ' + fmtMio(lot.highestBid) + ' · ' + (lot.bidCount||0) + ' Gebote') : 'Marktwert des Spielers · noch kein Gebot';
     priceSide.appendChild(priceLabel); priceSide.appendChild(priceValue); priceSide.appendChild(leader);
     lotWrap.appendChild(playerSide); lotWrap.appendChild(priceSide); lotContent.appendChild(lotWrap);
 
-    var participant = auctionParticipant(myToken);
-    if(participant){
-      var participantTeam = teamById(participant.teamId);
-      var nextAmount = lot.highestBid===null ? lot.startPrice : Math.round((lot.highestBid + STATE.auction.bidIncrement)*1000000)/1000000;
-      var remaining = participantTeam ? participantTeam.balance : 0;
-      var ownTeamLeads = lot.highestTeamId===participant.teamId;
-      bidBtn.style.display = '';
-      bidBtn.textContent = fmtMio(nextAmount) + ' bieten';
-      bidBtn.disabled = auctionBusy || !stateRef || !firebaseConnected || ownTeamLeads || nextAmount>remaining;
-      if(ownTeamLeads) bidInfo.textContent = (participantTeam ? participantTeam.name : 'Dein Team') + ' führt bereits.';
-      else if(nextAmount>remaining) bidInfo.textContent = 'Nicht genug Budget: verfügbar ' + fmtMio(remaining) + '.';
-      else bidInfo.textContent = 'Für ' + (participantTeam ? participantTeam.name : 'dein Team') + ' · danach verbleiben ' + fmtMio(remaining-nextAmount) + '.';
-    } else {
-      bidInfo.textContent = 'Dieser Browser war beim Auktionsstart keinem teilnehmenden Team zugeordnet.';
-    }
+    updateAuctionBidEntry();
     var auctionUnavailable = auctionBusy || !stateRef || !firebaseConnected;
     finalizeBtn.disabled = auctionUnavailable || !lot.highestTeamId;
     cancelBtn.disabled = auctionUnavailable;
@@ -2731,6 +2767,10 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   // ---- events ----
   document.getElementById('startAuctionBtn').addEventListener('click', openAuctionStartModal);
   document.getElementById('auctionBidBtn').addEventListener('click', placeAuctionBid);
+  document.getElementById('auctionBidAmount').addEventListener('input', updateAuctionBidEntry);
+  document.getElementById('auctionBidAmount').addEventListener('keydown', function(ev){
+    if(ev.key==='Enter' && !document.getElementById('auctionBidBtn').disabled) placeAuctionBid();
+  });
   document.getElementById('auctionFinalizeBtn').addEventListener('click', finalizeAuctionLot);
   document.getElementById('auctionCancelBtn').addEventListener('click', cancelAuctionLot);
   document.getElementById('auctionSkipBtn').addEventListener('click', skipAuctionNominator);

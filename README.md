@@ -67,7 +67,8 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
   angemeldeten Browser mit Teamzuordnung werden als Teilnehmer uebernommen. Eine ausgewaehlte oder
   zufaellige Startperson legt einen unvergebenen Spieler per Drag-and-drop
   (mobil alternativ per "Auflegen") auf den virtuellen Auktionsplatz. Danach
-  koennen alle Teilnehmer live fuer ihr Team bieten. Der Admin erteilt den
+  koennen alle Teilnehmer ein eigenes Gebot ab dem sichtbaren Mindestgebot
+  eingeben; der Marktwert ist das erste Mindestgebot. Der Admin erteilt den
   Zuschlag; Kauf, Budget und Verlauf werden in derselben Firebase-Transaktion
   aktualisiert und das Nominierungsrecht wandert zur naechsten Person.
 - Waehrend einer Live-Auktion sind konkurrierende Direktkaeufe und strukturelle

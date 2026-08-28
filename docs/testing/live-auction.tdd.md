@@ -6,7 +6,7 @@ The journeys were derived from the approved conversation plan; no separate plan 
 
 - As an admin, I can start an auction with a fixed bid increment and a selected or random first nominator without changing individual team budgets.
 - As the current nominator, I can place an unsold footballer on the virtual auction spot.
-- As a snapshotted participant, I can bid for the team assigned to my browser.
+- As a snapshotted participant, I can enter a bid at or above the visible minimum for the team assigned to my browser.
 - As an admin, I can award or cancel a lot and rotate or skip the nominator without corrupting budgets or purchases.
 
 ## RED and GREEN evidence
@@ -24,7 +24,7 @@ The journeys were derived from the approved conversation plan; no separate plan 
 | 1 | Every registered browser with a valid team is snapshotted without changing individual budgets or balances. | Unit + Integration | PASS |
 | 2 | Existing purchases and team balances remain unchanged when a session starts. | Unit | PASS |
 | 3 | Only the current person may nominate an unsold player. | Unit | PASS |
-| 4 | Bids require the exact next increment, matching team ownership, a current snapshot, and sufficient budget. | Unit | PASS |
+| 4 | Bids require at least the visible minimum, matching team ownership, a current snapshot, tenths precision, and sufficient budget. | Unit | PASS |
 | 5 | Stale simultaneous bids cannot overwrite the newer accepted bid. | Unit | PASS |
 | 6 | Awarding creates exactly one purchase/history entry, debits exactly once, and rotates the nominator. | Unit | PASS |
 | 7 | Canceling preserves balances; skipping rotates only when no lot is active. | Unit | PASS |
@@ -40,7 +40,7 @@ The journeys were derived from the approved conversation plan; no separate plan 
 
 - Build: bundled Python `build_transferbrett.py` — PASS.
 - Tests: bundled Node `--test --experimental-test-coverage tests/auction_logic.test.js tests/auction_build_integration.test.js` — 29/29 PASS at the recorded full-suite checkpoint.
-- Domain coverage at that checkpoint: 98.17% lines, 83.97% branches, 96.77% functions.
+- Domain coverage at that checkpoint: 98.17% lines, 84.62% branches, 96.77% functions.
 - Syntax: bundled Node `--check auction_logic.js` — PASS.
 
 ## Known gaps

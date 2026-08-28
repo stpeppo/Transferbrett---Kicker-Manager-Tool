@@ -131,7 +131,7 @@ test('only the snapshotted current nominator can place an unsold player on the l
   });
 });
 
-test('valid bids use exactly the fixed increment and retain the winning browser and team', () => {
+test('valid bids may exceed the current minimum and retain the winning browser and team', () => {
   let state = placeBid(activeLot(), {
     token: 'bob',
     teamId: 'team-b',
@@ -147,11 +147,11 @@ test('valid bids use exactly the fixed increment and retain the winning browser 
   state = placeBid(state, {
     token: 'alice',
     teamId: 'team-a',
-    amount: 10.5,
+    amount: 12,
     expectedCurrentBid: 10,
     now: 2_201,
   });
-  assert.equal(state.auction.lot.highestBid, 10.5);
+  assert.equal(state.auction.lot.highestBid, 12);
   assert.equal(state.auction.lot.highestTeamId, 'team-a');
   assert.equal(state.auction.lot.bidCount, 2);
 });
@@ -181,6 +181,11 @@ test('bids reject stale/equal amounts so simultaneous bidders cannot overwrite a
       amount: 10,
       expectedCurrentBid: 10,
       now: 2_201,
+    }),
+  );
+  expectCode('INVALID_BID_INCREMENT', () =>
+    placeBid(afterFirstBid, {
+      token: 'alice', teamId: 'team-a', amount: 10.55, expectedCurrentBid: 10,
     }),
   );
 });

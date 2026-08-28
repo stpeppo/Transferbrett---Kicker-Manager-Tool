@@ -19,6 +19,8 @@ test('template exposes the live auction panel and its primary controls', () => {
   assert.match(template, /id="startAuctionBtn"/);
   assert.match(template, /id="auctionDropZone"/);
   assert.match(template, /id="auctionBidBtn"/);
+  assert.match(template, /id="auctionBidAmount"/);
+  assert.match(template, /Aktuelles Mindestgebot/);
 });
 
 test('auction writes are connectivity-gated and use transactional state updates', () => {
