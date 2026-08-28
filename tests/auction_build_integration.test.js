@@ -17,10 +17,20 @@ test('template exposes the live auction panel and its primary controls', () => {
 
   assert.match(template, /id="auctionPanel"/);
   assert.match(template, /id="startAuctionBtn"/);
+  assert.match(template, /id="resumeAuctionBtn"/);
   assert.match(template, /id="auctionDropZone"/);
   assert.match(template, /id="auctionBidBtn"/);
   assert.match(template, /id="auctionBidAmount"/);
   assert.match(template, /Aktuelles Mindestgebot/);
+});
+
+test('a finished auction exposes an admin-only resume action', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /function resumeAuctionSession\(/);
+  assert.match(template, /runAuctionTransition\('resumeSession'/);
+  assert.match(template, /Auktion fortsetzen/);
+  assert.match(template, /Neue Auktion starten/);
 });
 
 test('auction panel is positioned directly between teams and the player table', () => {

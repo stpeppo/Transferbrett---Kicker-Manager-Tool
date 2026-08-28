@@ -271,6 +271,29 @@
     return next;
   }
 
+  function resumeSession(state, options) {
+    requireState(state);
+    options = options || {};
+    requireAdmin(state, options.actorToken);
+    if (!state.auction || !Array.isArray(state.auction.participants) || state.auction.participants.length === 0) {
+      fail('SESSION_NOT_RESUMABLE');
+    }
+    if (state.auction.active === true) fail('SESSION_ALREADY_ACTIVE');
+    if (state.auction.lot) fail('LOT_ALREADY_ACTIVE');
+
+    var next = clone(state);
+    var currentIndex = next.auction.participants.findIndex(function (participant) {
+      return participant.token === next.auction.currentNominatorToken;
+    });
+    if (currentIndex < 0) currentIndex = 0;
+    next.auction.turnIndex = currentIndex;
+    next.auction.currentNominatorToken = next.auction.participants[currentIndex].token;
+    next.auction.active = true;
+    next.auction.endedAt = null;
+    next.auction.resumedAt = options.now;
+    return next;
+  }
+
   function leaveSession(state, options) {
     requireState(state);
     options = options || {};
@@ -325,6 +348,7 @@
     cancelLot: cancelLot,
     skipNominator: skipNominator,
     endSession: endSession,
+    resumeSession: resumeSession,
     leaveSession: leaveSession,
   };
 }));

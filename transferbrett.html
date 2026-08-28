@@ -439,7 +439,10 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
           <h2>Live-Auktion</h2>
           <div class="auction-status" id="auctionStatus"><span class="auction-status-dot"></span><span id="auctionStatusText">Noch nicht gestartet</span></div>
         </div>
-        <button class="btn primary" id="startAuctionBtn" type="button">Auktion starten</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" id="resumeAuctionBtn" type="button" style="display:none;">Auktion fortsetzen</button>
+          <button class="btn primary" id="startAuctionBtn" type="button">Auktion starten</button>
+        </div>
       </div>
       <div id="auctionSessionContent" style="display:none;">
         <div class="auction-session-meta" id="auctionSessionMeta"></div>
@@ -814,6 +817,29 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     return next;
   }
 
+  function resumeSession(state, options) {
+    requireState(state);
+    options = options || {};
+    requireAdmin(state, options.actorToken);
+    if (!state.auction || !Array.isArray(state.auction.participants) || state.auction.participants.length === 0) {
+      fail('SESSION_NOT_RESUMABLE');
+    }
+    if (state.auction.active === true) fail('SESSION_ALREADY_ACTIVE');
+    if (state.auction.lot) fail('LOT_ALREADY_ACTIVE');
+
+    var next = clone(state);
+    var currentIndex = next.auction.participants.findIndex(function (participant) {
+      return participant.token === next.auction.currentNominatorToken;
+    });
+    if (currentIndex < 0) currentIndex = 0;
+    next.auction.turnIndex = currentIndex;
+    next.auction.currentNominatorToken = next.auction.participants[currentIndex].token;
+    next.auction.active = true;
+    next.auction.endedAt = null;
+    next.auction.resumedAt = options.now;
+    return next;
+  }
+
   function leaveSession(state, options) {
     requireState(state);
     options = options || {};
@@ -868,6 +894,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     cancelLot: cancelLot,
     skipNominator: skipNominator,
     endSession: endSession,
+    resumeSession: resumeSession,
     leaveSession: leaveSession,
   };
 }));
@@ -1378,6 +1405,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   var auctionBusy = false;
   var AUCTION_ERROR_TEXT = {
     SESSION_ALREADY_ACTIVE:'Eine Auktion läuft bereits.',
+    SESSION_NOT_RESUMABLE:'Es gibt keine beendete Auktion, die fortgesetzt werden kann.',
     UNAUTHORIZED_ADMIN:'Nur der aktuelle Admin darf diese Auktionsaktion ausführen.',
     SESSION_INACTIVE:'Die Auktion ist nicht mehr aktiv.',
     NO_ELIGIBLE_PARTICIPANTS:'Es ist noch niemand mit einem gültigen Team angemeldet.',
@@ -1928,6 +1956,12 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     openConfirmModal('Die Live-Auktion wird beendet. Käufe und Budgets bleiben erhalten.', function(){
       runAuctionTransition('endSession', {actorToken:myToken, now:Date.now()});
     }, 'Auktion beenden');
+  }
+  function resumeAuctionSession(){
+    if(!isAdmin() || auctionActive() || !STATE.auction) return;
+    runAuctionTransition('resumeSession', {actorToken:myToken, now:Date.now()}, function(){
+      setAuctionMessage('Die Auktion wird mit derselben Reihenfolge fortgesetzt.', true);
+    });
   }
 
   function openReassignModal(playerId){
@@ -2591,6 +2625,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var status = document.getElementById('auctionStatus');
     var statusText = document.getElementById('auctionStatusText');
     var startBtn = document.getElementById('startAuctionBtn');
+    var resumeBtn = document.getElementById('resumeAuctionBtn');
     var content = document.getElementById('auctionSessionContent');
     var dropZone = document.getElementById('auctionDropZone');
     var lotContent = document.getElementById('auctionLotContent');
@@ -2605,11 +2640,15 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var endBtn = document.getElementById('auctionEndBtn');
     var offline = document.getElementById('auctionOffline');
 
+    var resumable = !active && !!STATE.auction && Array.isArray(STATE.auction.participants) && STATE.auction.participants.length>0;
     startBtn.style.display = (!active && isAdmin()) ? '' : 'none';
+    startBtn.textContent = resumable ? 'Neue Auktion starten' : 'Auktion starten';
     startBtn.disabled = !stateRef || !firebaseConnected;
+    resumeBtn.style.display = (resumable && isAdmin()) ? '' : 'none';
+    resumeBtn.disabled = !stateRef || !firebaseConnected || auctionBusy;
     content.style.display = active ? '' : 'none';
     status.className = 'auction-status' + (active ? ' live' : '');
-    statusText.textContent = active ? 'Live · ' + STATE.auction.participants.length + ' Teilnehmer' : 'Noch nicht gestartet';
+    statusText.textContent = active ? 'Live · ' + STATE.auction.participants.length + ' Teilnehmer' : (resumable ? 'Beendet · kann fortgesetzt werden' : 'Noch nicht gestartet');
     if(!active) return;
 
     offline.style.display = (stateRef && firebaseConnected) ? 'none' : '';
@@ -2806,6 +2845,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
   // ---- events ----
   document.getElementById('startAuctionBtn').addEventListener('click', openAuctionStartModal);
+  document.getElementById('resumeAuctionBtn').addEventListener('click', resumeAuctionSession);
   document.getElementById('auctionBidBtn').addEventListener('click', placeAuctionBid);
   document.getElementById('auctionBidAmount').addEventListener('input', updateAuctionBidEntry);
   document.getElementById('auctionBidAmount').addEventListener('keydown', function(ev){

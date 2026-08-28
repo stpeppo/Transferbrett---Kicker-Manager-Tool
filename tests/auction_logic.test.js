@@ -11,6 +11,7 @@ const {
   cancelLot,
   skipNominator,
   endSession,
+  resumeSession,
   leaveSession,
 } = require('../auction_logic');
 
@@ -349,6 +350,20 @@ test('ending a session records its end and prevents further nominations or bids'
   );
 });
 
+test('a finished session can resume with the same participants and nomination turn', () => {
+  const before = skipNominator(activeSession(), { actorToken: 'admin-token', now: 2_500 });
+  const ended = endSession(before, { actorToken: 'admin-token', now: 3_000 });
+  const resumed = resumeSession(ended, { actorToken: 'admin-token', now: 3_100 });
+
+  assert.equal(resumed.auction.active, true);
+  assert.equal(resumed.auction.endedAt, null);
+  assert.equal(resumed.auction.resumedAt, 3_100);
+  assert.equal(resumed.auction.currentNominatorToken, 'bob');
+  assert.deepEqual(resumed.auction.participants, before.auction.participants);
+  assert.deepEqual(resumed.teams, before.teams);
+  assert.deepEqual(resumed.purchases, before.purchases);
+});
+
 test('leaving removes a participant immediately and hands over the nomination turn', () => {
   const left = leaveSession(activeSession(), { token: 'alice', now: 2_500 });
 
@@ -399,6 +414,8 @@ test('admin transitions reject every browser token except the current admin toke
   }));
   expectCode('UNAUTHORIZED_ADMIN', () => skipNominator(activeSession(), { actorToken: 'alice' }));
   expectCode('UNAUTHORIZED_ADMIN', () => endSession(activeSession(), { actorToken: 'alice' }));
+  const ended = endSession(activeSession(), { actorToken: 'admin-token' });
+  expectCode('UNAUTHORIZED_ADMIN', () => resumeSession(ended, { actorToken: 'alice' }));
 });
 
 test('session start rejects an existing session and invalid configuration', () => {
@@ -422,6 +439,11 @@ test('session start rejects an existing session and invalid configuration', () =
       actorToken: 'admin-token', startNominatorToken: 'alice', bidIncrement: 0.5,
     }),
   );
+});
+
+test('resume rejects a missing or already active session', () => {
+  expectCode('SESSION_NOT_RESUMABLE', () => resumeSession(baseState(), { actorToken: 'admin-token' }));
+  expectCode('SESSION_ALREADY_ACTIVE', () => resumeSession(activeSession(), { actorToken: 'admin-token' }));
 });
 
 test('nomination rejects an occupied lot, sold players, and reused lot IDs', () => {

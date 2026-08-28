@@ -85,6 +85,9 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
 - Die Adminrolle kann auch waehrend einer laufenden Auktion uebernommen oder
   freigegeben werden. Der Wechsel wird unmittelbar per Firebase-Transaktion
   an alle verbundenen Browser verteilt.
+- Eine beendete Auktion kann vom Admin mit derselben Teilnehmerliste und
+  Nominierungsreihenfolge fortgesetzt werden. Budgets, Kaeufe und Verlauf
+  bleiben dabei unveraendert; alternativ kann bewusst eine neue Auktion gestartet werden.
 
 ## Hosting
 
