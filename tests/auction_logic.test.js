@@ -38,7 +38,6 @@ function baseState(overrides = {}) {
 function activeSession() {
   return startSession(baseState(), {
     actorToken: 'admin-token',
-    startBudget: 125,
     startNominatorToken: 'alice',
     bidIncrement: 0.5,
     now: 2_000,
@@ -59,11 +58,10 @@ function expectCode(code, operation) {
   assert.throws(operation, (error) => error && error.code === code);
 }
 
-test('session start snapshots only present browsers with a valid team and applies the chosen common budget', () => {
+test('session start snapshots all assigned browsers and preserves every individual team budget', () => {
   const before = baseState();
   const next = startSession(before, {
     actorToken: 'admin-token',
-    startBudget: 125,
     startNominatorToken: 'alice',
     bidIncrement: 0.5,
     now: 2_000,
@@ -79,15 +77,15 @@ test('session start snapshots only present browsers with a valid team and applie
   assert.deepEqual(
     next.teams.map(({ id, budget, balance }) => ({ id, budget, balance })),
     [
-      { id: 'team-a', budget: 125, balance: 125 },
-      { id: 'team-b', budget: 125, balance: 125 },
+      { id: 'team-a', budget: 80, balance: 80 },
+      { id: 'team-b', budget: 90, balance: 90 },
       { id: 'team-c', budget: 70, balance: 70 },
     ],
   );
   assert.equal(before.teams[0].budget, 80, 'transition must not mutate its input snapshot');
 });
 
-test('session start never resets budgets once purchases already exist', () => {
+test('session start never resets budgets or balances when purchases already exist', () => {
   const before = baseState({
     purchases: { existing: { teamId: 'team-a', price: 20 } },
     teams: [
@@ -98,7 +96,6 @@ test('session start never resets budgets once purchases already exist', () => {
 
   const next = startSession(before, {
     actorToken: 'admin-token',
-    startBudget: 125,
     startNominatorToken: 'alice',
     bidIncrement: 0.5,
     now: 2_000,
@@ -199,7 +196,7 @@ test('the leading team cannot raise its own bid and increments use visible tenth
   );
   expectCode('INVALID_BID_INCREMENT', () =>
     startSession(baseState(), {
-      actorToken: 'admin-token', startBudget: 100,
+      actorToken: 'admin-token',
       startNominatorToken: 'alice', bidIncrement: 0.15,
     }),
   );
@@ -251,7 +248,7 @@ test('finalize creates one purchase/history entry, debits once, and rotates the 
   });
 
   assert.deepEqual(finalized.purchases['player-7'], { teamId: 'team-b', price: 10 });
-  assert.equal(finalized.teams.find((team) => team.id === 'team-b').balance, 115);
+  assert.equal(finalized.teams.find((team) => team.id === 'team-b').balance, 80);
   assert.equal(finalized.history.length, 1);
   assert.deepEqual(
     {
@@ -277,7 +274,7 @@ test('finalize creates one purchase/history entry, debits once, and rotates the 
   expectCode('NO_ACTIVE_LOT', () =>
     finalizeLot(finalized, { actorToken: 'admin-token', expectedLotId: 'lot-1', now: 2_301 }),
   );
-  assert.equal(finalized.teams.find((team) => team.id === 'team-b').balance, 115);
+  assert.equal(finalized.teams.find((team) => team.id === 'team-b').balance, 80);
   assert.equal(finalized.history.length, 1);
 });
 
@@ -373,7 +370,7 @@ test('the departing admin is handed over and the final participant ends the sess
 
 test('admin transitions reject every browser token except the current admin token', () => {
   expectCode('UNAUTHORIZED_ADMIN', () => startSession(baseState(), {
-    actorToken: 'alice', startBudget: 100, startNominatorToken: 'alice', bidIncrement: 0.5,
+    actorToken: 'alice', startNominatorToken: 'alice', bidIncrement: 0.5,
   }));
   expectCode('UNAUTHORIZED_ADMIN', () => finalizeLot(activeLot(), {
     actorToken: 'alice', expectedLotId: 'lot-1',
@@ -388,27 +385,22 @@ test('admin transitions reject every browser token except the current admin toke
 test('session start rejects an existing session and invalid configuration', () => {
   expectCode('SESSION_ALREADY_ACTIVE', () =>
     startSession(activeSession(), {
-      actorToken: 'admin-token', startBudget: 100, startNominatorToken: 'alice', bidIncrement: 0.5,
-    }),
-  );
-  expectCode('INVALID_START_BUDGET', () =>
-    startSession(baseState(), {
-      actorToken: 'admin-token', startBudget: -1, startNominatorToken: 'alice', bidIncrement: 0.5,
+      actorToken: 'admin-token', startNominatorToken: 'alice', bidIncrement: 0.5,
     }),
   );
   expectCode('INVALID_BID_INCREMENT', () =>
     startSession(baseState(), {
-      actorToken: 'admin-token', startBudget: 100, startNominatorToken: 'alice', bidIncrement: 0,
+      actorToken: 'admin-token', startNominatorToken: 'alice', bidIncrement: 0,
     }),
   );
   expectCode('INVALID_START_NOMINATOR', () =>
     startSession(baseState(), {
-      actorToken: 'admin-token', startBudget: 100, startNominatorToken: 'spectator', bidIncrement: 0.5,
+      actorToken: 'admin-token', startNominatorToken: 'spectator', bidIncrement: 0.5,
     }),
   );
   expectCode('NO_ELIGIBLE_PARTICIPANTS', () =>
     startSession(baseState({ presence: {} }), {
-      actorToken: 'admin-token', startBudget: 100, startNominatorToken: 'alice', bidIncrement: 0.5,
+      actorToken: 'admin-token', startNominatorToken: 'alice', bidIncrement: 0.5,
     }),
   );
 });

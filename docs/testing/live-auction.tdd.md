@@ -4,7 +4,7 @@
 
 The journeys were derived from the approved conversation plan; no separate plan file was supplied.
 
-- As an admin, I can start an auction with a freely chosen common budget, a fixed bid increment, and a selected or random first nominator.
+- As an admin, I can start an auction with a fixed bid increment and a selected or random first nominator without changing individual team budgets.
 - As the current nominator, I can place an unsold footballer on the virtual auction spot.
 - As a snapshotted participant, I can bid for the team assigned to my browser.
 - As an admin, I can award or cancel a lot and rotate or skip the nominator without corrupting budgets or purchases.
@@ -14,15 +14,15 @@ The journeys were derived from the approved conversation plan; no separate plan 
 | Task | Test target | RED evidence | GREEN evidence |
 |---|---|---|---|
 | Auction domain transitions | `tests/auction_logic.test.js` | `node --test tests/auction_logic.test.js` failed with `Cannot find module '../auction_logic'` before production logic existed; the later leave-session tests failed until that transition was added. | 20 domain tests pass after `auction_logic.js`, its authorization guards, and active leave handling were implemented. |
-| Build and UI integration | `tests/auction_build_integration.test.js` | Three assertions failed because the panel, controls, build placeholder, and inlined logic did not yet exist. | All eight integration checks pass after rebuilding `transferbrett.html`. |
+| Build and UI integration | `tests/auction_build_integration.test.js` | Three assertions failed because the panel, controls, build placeholder, and inlined logic did not yet exist. | All nine integration checks pass after rebuilding `transferbrett.html`. |
 | Nominator skip | `tests/auction_logic.test.js` | The new test failed with `TypeError: skipNominator is not a function`. | The same test passes after the transition was added. |
 
 ## Guarantees
 
 | # | What is guaranteed | Test type | Result |
 |---|---|---|---|
-| 1 | Only browsers with a valid team are snapshotted and the entered budget is applied without mutating the input state. | Unit | PASS |
-| 2 | Existing purchases prevent a later session start from resetting team balances. | Unit | PASS |
+| 1 | Every registered browser with a valid team is snapshotted without changing individual budgets or balances. | Unit + Integration | PASS |
+| 2 | Existing purchases and team balances remain unchanged when a session starts. | Unit | PASS |
 | 3 | Only the current person may nominate an unsold player. | Unit | PASS |
 | 4 | Bids require the exact next increment, matching team ownership, a current snapshot, and sufficient budget. | Unit | PASS |
 | 5 | Stale simultaneous bids cannot overwrite the newer accepted bid. | Unit | PASS |
@@ -39,8 +39,8 @@ The journeys were derived from the approved conversation plan; no separate plan 
 ## Commands and coverage
 
 - Build: bundled Python `build_transferbrett.py` — PASS.
-- Tests: bundled Node `--test --experimental-test-coverage tests/auction_logic.test.js tests/auction_build_integration.test.js` — 28/28 PASS at the recorded full-suite checkpoint.
-- Domain coverage at that checkpoint: 98.25% lines, 84.76% branches, 96.97% functions.
+- Tests: bundled Node `--test --experimental-test-coverage tests/auction_logic.test.js tests/auction_build_integration.test.js` — 29/29 PASS at the recorded full-suite checkpoint.
+- Domain coverage at that checkpoint: 98.17% lines, 83.97% branches, 96.77% functions.
 - Syntax: bundled Node `--check auction_logic.js` — PASS.
 
 ## Known gaps

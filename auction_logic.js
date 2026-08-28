@@ -78,7 +78,6 @@
     options = options || {};
     requireAdmin(state, options.actorToken);
     if (state.auction && state.auction.active === true) fail('SESSION_ALREADY_ACTIVE');
-    if (!isVisibleTenth(options.startBudget) || options.startBudget < 0 || options.startBudget > 1000000) fail('INVALID_START_BUDGET');
     if (!isVisibleTenth(options.bidIncrement) || options.bidIncrement <= 0 || options.bidIncrement > 1000000) fail('INVALID_BID_INCREMENT');
 
     var validTeamIds = {};
@@ -100,20 +99,6 @@
     if (turnIndex < 0) fail('INVALID_START_NOMINATOR');
 
     var next = clone(state);
-    var hasPurchases = !!next.purchases && Object.keys(next.purchases).length > 0;
-    if (!hasPurchases) {
-      var participatingTeamIds = {};
-      participants.forEach(function (participant) {
-        participatingTeamIds[participant.teamId] = true;
-      });
-      next.teams.forEach(function (team) {
-        if (participatingTeamIds[team.id]) {
-          team.budget = money(options.startBudget);
-          team.balance = money(options.startBudget);
-        }
-      });
-    }
-
     next.auction = {
       active: true,
       startedAt: options.now,

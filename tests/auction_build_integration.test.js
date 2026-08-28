@@ -55,6 +55,14 @@ test('present browsers can explicitly leave the game', () => {
   assert.match(template, /presenceRef\.child\(myToken\)\.remove\(\)/);
 });
 
+test('auction start keeps individual budgets and includes every assigned browser', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.doesNotMatch(template, /id='auctionStartBudget'/);
+  assert.doesNotMatch(template, /15\*60\*1000/);
+  assert.match(template, /individuellen Budgets und aktuellen Kontostände/);
+});
+
 test('build script inlines the reusable auction domain logic', () => {
   const buildScript = read('build_transferbrett.py');
 

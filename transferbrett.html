@@ -613,7 +613,6 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     options = options || {};
     requireAdmin(state, options.actorToken);
     if (state.auction && state.auction.active === true) fail('SESSION_ALREADY_ACTIVE');
-    if (!isVisibleTenth(options.startBudget) || options.startBudget < 0 || options.startBudget > 1000000) fail('INVALID_START_BUDGET');
     if (!isVisibleTenth(options.bidIncrement) || options.bidIncrement <= 0 || options.bidIncrement > 1000000) fail('INVALID_BID_INCREMENT');
 
     var validTeamIds = {};
@@ -635,20 +634,6 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     if (turnIndex < 0) fail('INVALID_START_NOMINATOR');
 
     var next = clone(state);
-    var hasPurchases = !!next.purchases && Object.keys(next.purchases).length > 0;
-    if (!hasPurchases) {
-      var participatingTeamIds = {};
-      participants.forEach(function (participant) {
-        participatingTeamIds[participant.teamId] = true;
-      });
-      next.teams.forEach(function (team) {
-        if (participatingTeamIds[team.id]) {
-          team.budget = money(options.startBudget);
-          team.balance = money(options.startBudget);
-        }
-      });
-    }
-
     next.auction = {
       active: true,
       startedAt: options.now,
@@ -1356,7 +1341,6 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     SESSION_INACTIVE:'Die Auktion ist nicht mehr aktiv.',
     NO_ELIGIBLE_PARTICIPANTS:'Es ist noch niemand mit einem gültigen Team angemeldet.',
     INVALID_START_NOMINATOR:'Die gewählte Startperson ist nicht mehr verfügbar.',
-    INVALID_START_BUDGET:'Bitte gib ein gültiges Startbudget ein.',
     INVALID_BID_INCREMENT:'Dieses Gebot entspricht nicht dem festgelegten Gebotsschritt.',
     NOT_CURRENT_NOMINATOR:'Nur die aktuell nominierende Person darf einen Spieler auflegen.',
     LOT_ALREADY_ACTIVE:'Auf dem Auktionsplatz liegt bereits ein Spieler.',
@@ -1379,11 +1363,10 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     return AUCTION_ERROR_TEXT[error && error.code] || (error && error.message) || 'Die Auktionsaktion konnte nicht ausgeführt werden.';
   }
   function presenceSnapshotForAuction(){
-    var cutoff = Date.now() - 15*60*1000;
     var snapshot = {};
     Object.keys(STATE.presence || {}).forEach(function(token){
       var p = STATE.presence[token];
-      if(p && p.name && p.teamId && p.lastSeen >= cutoff && teamById(p.teamId)){
+      if(p && p.name && p.teamId && teamById(p.teamId)){
         snapshot[token] = {name:p.name, teamId:p.teamId, lastSeen:p.lastSeen};
       }
     });
@@ -1768,18 +1751,10 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var modal = document.createElement('div'); modal.className='modal';
     var h = document.createElement('h3'); h.textContent='Live-Auktion starten';
     var sub = document.createElement('div'); sub.className='modal-sub';
-    sub.textContent = tokens.length + ' anwesende Person' + (tokens.length===1?'':'en') + ' mit Team werden übernommen.';
+    sub.textContent = tokens.length + ' angemeldete Person' + (tokens.length===1?'':'en') + ' mit Team werden übernommen.';
 
-    var budgetLbl = document.createElement('label'); budgetLbl.textContent='Gemeinsames Startbudget (Mio €)';
-    var budgetInp = document.createElement('input'); budgetInp.type='number'; budgetInp.min='0'; budgetInp.step='0.1';
-    budgetInp.id='auctionStartBudget'; budgetLbl.htmlFor=budgetInp.id;
-    budgetInp.value = STATE.teams.length ? STATE.teams[0].budget : 100;
-    var hasPurchases = purchasedIds().length>0;
-    if(hasPurchases){ budgetInp.disabled=true; }
     var budgetHint = document.createElement('div'); budgetHint.className='budget-hint';
-    budgetHint.textContent = hasPurchases
-      ? 'Es gibt bereits Käufe. Die vorhandenen Budgets und Kontostände bleiben deshalb unverändert.'
-      : 'Dieses Budget wird für alle teilnehmenden Teams gesetzt.';
+    budgetHint.textContent = 'Die individuellen Budgets und aktuellen Kontostände der Teams bleiben unverändert.';
 
     var stepLbl = document.createElement('label'); stepLbl.textContent='Fester Gebotsschritt (Mio €)';
     var stepInp = document.createElement('input'); stepInp.type='number'; stepInp.min='0.1'; stepInp.step='0.1'; stepInp.value='0.1';
@@ -1800,8 +1775,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var cancelBtn = document.createElement('button'); cancelBtn.className='btn small'; cancelBtn.textContent='Abbrechen'; cancelBtn.addEventListener('click', closeModal);
     var startBtn = document.createElement('button'); startBtn.className='btn small primary'; startBtn.textContent='Auktion starten';
     startBtn.addEventListener('click', function(){
-      var budget = parseFloat(budgetInp.value), increment = parseFloat(stepInp.value);
-      if(isNaN(budget) || budget<0 || Math.abs(budget*10-Math.round(budget*10))>0.000001){ startError.textContent='Das Startbudget muss in Schritten von 0,1 Mio. € angegeben werden.'; return; }
+      var increment = parseFloat(stepInp.value);
       if(isNaN(increment) || increment<=0 || Math.abs(increment*10-Math.round(increment*10))>0.000001){ startError.textContent='Der Gebotsschritt muss mindestens 0,1 Mio. € betragen und eine Nachkommastelle verwenden.'; return; }
       var currentPresenceSnapshot = presenceSnapshotForAuction();
       var currentTokens = Object.keys(currentPresenceSnapshot);
@@ -1813,13 +1787,13 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         : currentTokens[Math.floor(Math.random()*currentTokens.length)];
       startBtn.disabled=true;
       runAuctionTransition('startSession', {
-        actorToken:myToken, startBudget:budget, startNominatorToken:startToken, bidIncrement:increment,
+        actorToken:myToken, startNominatorToken:startToken, bidIncrement:increment,
         now:Date.now(), presenceSnapshot:currentPresenceSnapshot
       }, function(){ closeModal(); setAuctionMessage('Die Live-Auktion wurde gestartet.', true); }, function(){ startBtn.disabled=false; });
     });
     actions.appendChild(cancelBtn); actions.appendChild(startBtn);
     modal.appendChild(h); modal.appendChild(sub);
-    modal.appendChild(budgetLbl); modal.appendChild(budgetInp); modal.appendChild(budgetHint);
+    modal.appendChild(budgetHint);
     modal.appendChild(stepLbl); modal.appendChild(stepInp);
     modal.appendChild(starterLbl); modal.appendChild(starterSel); modal.appendChild(startError); modal.appendChild(actions);
     backdrop.appendChild(modal); root.appendChild(backdrop);
