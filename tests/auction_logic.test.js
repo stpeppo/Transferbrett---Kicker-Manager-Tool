@@ -156,6 +156,20 @@ test('valid bids may exceed the current minimum and retain the winning browser a
   assert.equal(state.auction.lot.bidCount, 2);
 });
 
+test('a Firebase lot with omitted null bid fields starts bidding at the market value', () => {
+  const firebaseRoundTrip = activeLot();
+  delete firebaseRoundTrip.auction.lot.highestBid;
+  delete firebaseRoundTrip.auction.lot.highestTeamId;
+
+  const next = placeBid(firebaseRoundTrip, {
+    token: 'bob', teamId: 'team-b', amount: 10, expectedCurrentBid: null, now: 2_200,
+  });
+
+  assert.equal(next.auction.lot.startPrice, 10);
+  assert.equal(next.auction.lot.highestBid, 10);
+  assert.equal(next.auction.lot.highestTeamId, 'team-b');
+});
+
 test('bids reject stale/equal amounts so simultaneous bidders cannot overwrite a newer bid', () => {
   const afterFirstBid = placeBid(activeLot(), {
     token: 'bob',

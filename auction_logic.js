@@ -159,11 +159,14 @@
     if (!team) fail('TEAM_NOT_PARTICIPANT');
     if (auction.lot.highestTeamId === options.teamId) fail('TEAM_ALREADY_LEADING');
 
-    if (!sameMoney(options.expectedCurrentBid, auction.lot.highestBid)) fail('STALE_BID');
+    // Firebase Realtime Database removes properties whose value is null. A fresh lot therefore
+    // returns without highestBid/highestTeamId after its first server round-trip.
+    var currentBid = isFiniteNumber(auction.lot.highestBid) ? money(auction.lot.highestBid) : null;
+    if (!sameMoney(options.expectedCurrentBid, currentBid)) fail('STALE_BID');
     if (!isVisibleTenth(options.amount)) fail('INVALID_BID_INCREMENT');
-    var requiredBid = auction.lot.highestBid === null
+    var requiredBid = currentBid === null
       ? auction.lot.startPrice
-      : money(auction.lot.highestBid + auction.bidIncrement);
+      : money(currentBid + auction.bidIncrement);
     if (money(options.amount) < money(requiredBid)) fail('INVALID_BID_INCREMENT');
     if (!isFiniteNumber(team.balance) || money(options.amount) > money(team.balance)) {
       fail('INSUFFICIENT_BUDGET');
@@ -191,7 +194,7 @@
     requireAdmin(state, options.actorToken);
     var auction = requireCurrentLot(state, options.expectedLotId);
     var lot = auction.lot;
-    if (lot.highestBid === null || !lot.highestTeamId) fail('NO_WINNING_BID');
+    if (!isFiniteNumber(lot.highestBid) || !lot.highestTeamId) fail('NO_WINNING_BID');
     if (state.purchases && state.purchases[lot.playerId]) fail('PLAYER_ALREADY_SOLD');
 
     var winner = teamById(state, lot.highestTeamId);

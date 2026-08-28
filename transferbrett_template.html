@@ -1528,11 +1528,12 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var participant = auctionParticipant(myToken);
     if(!participant) return;
     var lot = STATE.auction.lot;
+    var currentBid = (typeof lot.highestBid==='number' && isFinite(lot.highestBid)) ? lot.highestBid : null;
     var amount = parseFloat(document.getElementById('auctionBidAmount').value);
     if(isNaN(amount)) return;
     runAuctionTransition('placeBid', {
       token:myToken, teamId:participant.teamId, amount:amount,
-      expectedCurrentBid:lot.highestBid, now:Date.now()
+      expectedCurrentBid:currentBid, now:Date.now()
     });
   }
 
@@ -1551,10 +1552,11 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       return;
     }
     var lot = STATE.auction.lot;
+    var currentBid = (typeof lot.highestBid==='number' && isFinite(lot.highestBid)) ? lot.highestBid : null;
     var participantTeam = teamById(participant.teamId);
-    var minimum = lot.highestBid===null ? lot.startPrice : Math.round((lot.highestBid + STATE.auction.bidIncrement)*1000000)/1000000;
+    var minimum = currentBid===null ? lot.startPrice : Math.round((currentBid + STATE.auction.bidIncrement)*1000000)/1000000;
     var remaining = participantTeam ? participantTeam.balance : 0;
-    var revision = lot.id + '|' + String(lot.highestBid);
+    var revision = lot.id + '|' + String(currentBid);
     if(bidInput.dataset.lotRevision!==revision){
       bidInput.dataset.lotRevision=revision;
       bidInput.value=minimum.toFixed(1);
@@ -1568,7 +1570,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     bidEntry.style.display='flex'; bidBtn.style.display=''; bidBtn.textContent='Gebot abgeben';
     bidInput.disabled = unavailable || ownTeamLeads;
     bidBtn.disabled = unavailable || ownTeamLeads || !validTenth || amount<minimum || amount>remaining;
-    if(ownTeamLeads) bidInfo.textContent=(participantTeam ? participantTeam.name : 'Dein Team') + ' führt bereits mit ' + fmtMio(lot.highestBid) + '.';
+    if(ownTeamLeads) bidInfo.textContent=(participantTeam ? participantTeam.name : 'Dein Team') + ' führt bereits mit ' + fmtMio(currentBid) + '.';
     else if(!validTenth) bidInfo.textContent='Bitte gib dein Gebot in Schritten von 0,1 Mio. € ein.';
     else if(amount<minimum) bidInfo.textContent='Das aktuelle Mindestgebot beträgt ' + fmtMio(minimum) + '.';
     else if(amount>remaining) bidInfo.textContent='Nicht genug Budget: verfügbar ' + fmtMio(remaining) + '.';
@@ -2325,12 +2327,13 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var playerMeta = document.createElement('div'); playerMeta.className='auction-player-meta';
     playerMeta.textContent = p ? (p.c + ' · ' + POS_LABEL[p.p] + ' · Marktwert ' + fmtEUR(p.v)) : 'Live-Auktion';
     playerSide.appendChild(playerName); playerSide.appendChild(playerMeta);
-    var currentMinimum = lot.highestBid===null ? lot.startPrice : Math.round((lot.highestBid + STATE.auction.bidIncrement)*1000000)/1000000;
+    var displayedHighestBid = (typeof lot.highestBid==='number' && isFinite(lot.highestBid)) ? lot.highestBid : null;
+    var currentMinimum = displayedHighestBid===null ? lot.startPrice : Math.round((displayedHighestBid + STATE.auction.bidIncrement)*1000000)/1000000;
     var priceSide = document.createElement('div'); priceSide.className='auction-price';
     var priceLabel = document.createElement('div'); priceLabel.className='auction-price-label'; priceLabel.textContent='Aktuelles Mindestgebot';
     var priceValue = document.createElement('div'); priceValue.className='auction-price-value'; priceValue.textContent=fmtMio(currentMinimum);
     var leader = document.createElement('div'); leader.className='auction-leader';
-    leader.textContent = leaderTeam ? (leaderTeam.name + ' führt mit ' + fmtMio(lot.highestBid) + ' · ' + (lot.bidCount||0) + ' Gebote') : 'Marktwert des Spielers · noch kein Gebot';
+    leader.textContent = leaderTeam && displayedHighestBid!==null ? (leaderTeam.name + ' führt mit ' + fmtMio(displayedHighestBid) + ' · ' + (lot.bidCount||0) + ' Gebote') : 'Marktwert des Spielers · noch kein Gebot';
     priceSide.appendChild(priceLabel); priceSide.appendChild(priceValue); priceSide.appendChild(leader);
     lotWrap.appendChild(playerSide); lotWrap.appendChild(priceSide); lotContent.appendChild(lotWrap);
 
