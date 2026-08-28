@@ -73,6 +73,10 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
 - Waehrend einer Live-Auktion sind konkurrierende Direktkaeufe und strukturelle
   Aenderungen gesperrt. Gebote laufen ausschliesslich online und transaktional;
   ein Offline-Fallback wird fuer Auktionen bewusst nicht angeboten.
+- Ueber "Spiel verlassen" kann sich ein Browser aktiv und sofort aus der
+  Anwesenheit sowie einer laufenden Auktionsreihenfolge entfernen. Bereits
+  abgegebene Gebote bleiben gueltig; Nominierungsrecht und gegebenenfalls die
+  Adminrolle werden ohne Unterbrechung weitergegeben.
 
 ## Hosting
 

@@ -11,6 +11,7 @@ const {
   cancelLot,
   skipNominator,
   endSession,
+  leaveSession,
 } = require('../auction_logic');
 
 function baseState(overrides = {}) {
@@ -330,6 +331,44 @@ test('ending a session records its end and prevents further nominations or bids'
       lotId: 'lot-late',
     }),
   );
+});
+
+test('leaving removes a participant immediately and hands over the nomination turn', () => {
+  const left = leaveSession(activeSession(), { token: 'alice', now: 2_500 });
+
+  assert.deepEqual(left.auction.participants.map((participant) => participant.token), ['bob']);
+  assert.equal(left.auction.currentNominatorToken, 'bob');
+  assert.equal(left.auction.turnIndex, 0);
+  assert.equal(left.auction.active, true);
+  assert.equal(left.auction.lastLeftAt, 2_500);
+});
+
+test('leaving during a lot keeps existing bids and does not skip the successor after award', () => {
+  const withBid = placeBid(activeLot(), {
+    token: 'bob', teamId: 'team-b', amount: 10, expectedCurrentBid: null, now: 2_200,
+  });
+  const left = leaveSession(withBid, { token: 'alice', now: 2_250 });
+
+  assert.equal(left.auction.lot.highestBid, 10);
+  assert.equal(left.auction.currentNominatorToken, 'bob');
+  const finalized = finalizeLot(left, {
+    actorToken: 'admin-token', expectedLotId: 'lot-1', now: 2_300,
+  });
+  assert.equal(finalized.auction.currentNominatorToken, 'bob');
+  assert.equal(finalized.purchases['player-7'].teamId, 'team-b');
+});
+
+test('the departing admin is handed over and the final participant ends the session', () => {
+  const session = activeSession();
+  session.adminToken = 'alice';
+  const afterAdminLeaves = leaveSession(session, { token: 'alice', now: 2_500 });
+  assert.equal(afterAdminLeaves.adminToken, 'bob');
+
+  const ended = leaveSession(afterAdminLeaves, { token: 'bob', now: 2_600 });
+  assert.equal(ended.auction.active, false);
+  assert.equal(ended.auction.endedAt, 2_600);
+  assert.equal(ended.auction.currentNominatorToken, null);
+  assert.equal(ended.adminToken, null);
 });
 
 test('admin transitions reject every browser token except the current admin token', () => {

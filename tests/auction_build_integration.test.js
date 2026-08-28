@@ -46,6 +46,15 @@ test('local cached state is isolated by board code', () => {
   assert.doesNotMatch(template, /var LS_KEY = 'transferbrett_state_v2'/);
 });
 
+test('present browsers can explicitly leave the game', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /function leaveGame\(/);
+  assert.match(template, /Spiel verlassen/);
+  assert.match(template, /TransferbrettAuction\.leaveSession/);
+  assert.match(template, /presenceRef\.child\(myToken\)\.remove\(\)/);
+});
+
 test('build script inlines the reusable auction domain logic', () => {
   const buildScript = read('build_transferbrett.py');
 

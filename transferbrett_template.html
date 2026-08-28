@@ -1079,6 +1079,59 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     }, false);
   }
 
+  function finishLeavingGame(){
+    presenceRef.child(myToken).remove().then(function(){
+      delete STATE.presence[myToken];
+      myName = null;
+      try{ localStorage.removeItem(MY_NAME_KEY); } catch(e){}
+      saveLocal();
+      setAuctionMessage('Du hast das Spiel verlassen.', true);
+      render();
+    }).catch(function(error){
+      openInfoModal('Der Auktionsaustritt wurde gespeichert, aber die Anwesenheitsanzeige konnte noch nicht entfernt werden: ' + error.message, 'Verbindung fehlgeschlagen');
+    });
+  }
+
+  function leaveGame(){
+    if(!myName) return;
+    if(!stateRef || !presenceRef || !firebaseConnected){
+      openInfoModal('Zum aktiven Verlassen ist eine Verbindung zum gemeinsamen Spiel erforderlich.', 'Spiel kann offline nicht verlassen werden');
+      return;
+    }
+    var message = auctionActive()
+      ? 'Du wirst sofort aus der laufenden Auktion und der Nominierungsreihenfolge entfernt. Bereits abgegebene Gebote bleiben gültig.'
+      : 'Du wirst sofort aus der Liste der anwesenden Spieler entfernt.';
+    openConfirmModal(message, function(){
+      if(auctionBusy) return;
+      auctionBusy = true;
+      var leaveError = null;
+      stateRef.transaction(function(remoteCore){
+        if(!remoteCore){ leaveError = new Error('Der gemeinsame Spielstand ist noch nicht verfügbar.'); return; }
+        try{
+          if(remoteCore.auction && remoteCore.auction.active){
+            remoteCore.presence = STATE.presence || {};
+            var next = window.TransferbrettAuction.leaveSession(remoteCore, {token:myToken, now:Date.now()});
+            delete next.presence;
+            leaveError = null;
+            return next;
+          }
+          if(remoteCore.adminToken===myToken){
+            var withoutAdmin = {};
+            Object.keys(remoteCore).forEach(function(key){ withoutAdmin[key]=remoteCore[key]; });
+            withoutAdmin.adminToken = null;
+            return withoutAdmin;
+          }
+          return remoteCore;
+        } catch(error){ leaveError=error; return; }
+      }, function(error, committed){
+        auctionBusy = false;
+        if(error){ openInfoModal('Das Spiel konnte nicht verlassen werden: ' + error.message, 'Verbindung fehlgeschlagen'); render(); return; }
+        if(!committed){ openInfoModal(auctionErrorMessage(leaveError), 'Spiel konnte nicht verlassen werden'); render(); return; }
+        finishLeavingGame();
+      }, false);
+    }, 'Spiel verlassen');
+  }
+
   function doExport(onDone){
     try{
       var stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
@@ -2122,6 +2175,12 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       joinInp.addEventListener('keydown', function(ev){ if(ev.key==='Enter') doJoin(); });
       joinWrap.appendChild(joinInp); joinWrap.appendChild(joinBtn);
       row.appendChild(joinWrap);
+    } else {
+      var leaveBtn = document.createElement('button'); leaveBtn.className='btn small danger'; leaveBtn.textContent='Spiel verlassen';
+      leaveBtn.disabled = auctionBusy || !stateRef || !presenceRef || !firebaseConnected;
+      if(leaveBtn.disabled) leaveBtn.title='Zum Verlassen ist eine aktive Verbindung erforderlich';
+      leaveBtn.addEventListener('click', leaveGame);
+      row.appendChild(leaveBtn);
     }
   }
 

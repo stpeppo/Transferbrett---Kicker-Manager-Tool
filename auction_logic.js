@@ -238,8 +238,12 @@
       lotId: lot.id,
     });
     next.auction.lot = null;
-    next.auction.turnIndex = (next.auction.turnIndex + 1) % next.auction.participants.length;
-    next.auction.currentNominatorToken = next.auction.participants[next.auction.turnIndex].token;
+    // If the person who nominated this lot left meanwhile, leaveSession already handed the turn
+    // to the correct successor. Rotating again here would skip that person.
+    if (participantByToken(next.auction, lot.nominatedByToken)) {
+      next.auction.turnIndex = (next.auction.turnIndex + 1) % next.auction.participants.length;
+      next.auction.currentNominatorToken = next.auction.participants[next.auction.turnIndex].token;
+    }
     return next;
   }
 
@@ -279,6 +283,52 @@
     return next;
   }
 
+  function leaveSession(state, options) {
+    requireState(state);
+    options = options || {};
+    var auction = requireActiveSession(state);
+    if (typeof options.token !== 'string' || !options.token) fail('TEAM_NOT_PARTICIPANT');
+
+    var leavingIndex = auction.participants.findIndex(function (participant) {
+      return participant.token === options.token;
+    });
+    var departingAdmin = state.adminToken === options.token;
+    // A second attempt after a partial network failure may find the participant already removed
+    // while its presence record is still visible. Treat that retry as idempotent.
+    if (leavingIndex < 0 && !departingAdmin && !state.presence[options.token]) fail('TEAM_NOT_PARTICIPANT');
+
+    var next = clone(state);
+    if (leavingIndex >= 0) {
+      var oldCurrentToken = auction.currentNominatorToken;
+      var successorToken = auction.participants[(leavingIndex + 1) % auction.participants.length].token;
+      next.auction.participants.splice(leavingIndex, 1);
+
+      if (next.auction.participants.length === 0) {
+        next.auction.active = false;
+        next.auction.endedAt = options.now;
+        next.auction.lot = null;
+        next.auction.turnIndex = 0;
+        next.auction.currentNominatorToken = null;
+      } else {
+        var desiredCurrentToken = oldCurrentToken === options.token ? successorToken : oldCurrentToken;
+        var desiredIndex = next.auction.participants.findIndex(function (participant) {
+          return participant.token === desiredCurrentToken;
+        });
+        if (desiredIndex < 0) desiredIndex = 0;
+        next.auction.turnIndex = desiredIndex;
+        next.auction.currentNominatorToken = next.auction.participants[desiredIndex].token;
+      }
+    }
+
+    if (departingAdmin) {
+      next.adminToken = next.auction.active && next.auction.currentNominatorToken
+        ? next.auction.currentNominatorToken
+        : null;
+    }
+    next.auction.lastLeftAt = options.now;
+    return next;
+  }
+
   return {
     startSession: startSession,
     nominatePlayer: nominatePlayer,
@@ -287,5 +337,6 @@
     cancelLot: cancelLot,
     skipNominator: skipNominator,
     endSession: endSession,
+    leaveSession: leaveSession,
   };
 }));
