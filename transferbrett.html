@@ -309,9 +309,50 @@ tbody tr.is-new td:first-child{box-shadow:inset 3px 0 0 var(--new);}
 .h-badge.undone{background:var(--sold-dim); color:var(--sold);}
 
 footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:center;}
+
+/* ---------- Access gate ---------- */
+.access-gate{
+  position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
+  padding:20px; background:
+    radial-gradient(900px 420px at 20% 0%, var(--accent-dim), transparent 65%),
+    radial-gradient(700px 360px at 90% 100%, var(--gold-dim), transparent 65%),
+    var(--bg);
+}
+.access-gate[hidden]{display:none;}
+.access-card{
+  width:100%; max-width:390px; padding:26px; border:1px solid var(--line); border-radius:16px;
+  background:var(--surface); box-shadow:var(--shadow); text-align:center;
+}
+.access-mark{
+  width:52px; height:52px; margin:0 auto 13px; display:grid; place-items:center; border-radius:50%;
+  background:var(--accent-dim); color:var(--accent); font-size:25px;
+}
+.access-card h1{font-size:27px; margin-bottom:5px;}
+.access-card p{margin:0 0 18px; color:var(--ink-dim); font-size:13px;}
+.access-card label{display:block; margin-bottom:5px; text-align:left; color:var(--ink-dim); font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
+.access-card input{
+  width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px;
+  background:var(--surface-alt); color:var(--ink); margin-bottom:10px;
+}
+.access-card .btn{width:100%; padding:10px 12px; font-size:13px;}
+.access-error{min-height:20px; margin-top:10px; color:var(--sold); font-size:12px; font-weight:600;}
+.access-note{margin-top:7px; color:var(--ink-dim); font-size:11px;}
 </style>
 
-<div id="app">
+<div class="access-gate" id="accessGate">
+  <form class="access-card" id="accessForm">
+    <div class="access-mark" aria-hidden="true">&#128274;</div>
+    <h1>Transferbrett</h1>
+    <p>Bitte gib das Admin-Passwort ein, um das Tool zu öffnen.</p>
+    <label for="accessPassword">Admin-Passwort</label>
+    <input type="password" id="accessPassword" autocomplete="current-password" required autofocus>
+    <button class="btn primary" id="accessSubmit" type="submit">Tool öffnen</button>
+    <div class="access-error" id="accessError" role="alert" aria-live="polite"></div>
+    <div class="access-note">Die Freigabe bleibt auf diesem Browser gespeichert.</div>
+  </form>
+</div>
+
+<div id="app" style="display:none;">
   <div class="topbar">
     <div class="title-row">
       <div>
@@ -421,6 +462,66 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 <script>
 (function(){
   "use strict";
+
+  // ---- simple local access gate for static GitHub Pages hosting ----
+  // Only a salted SHA-256 digest is shipped; the password itself is not present in this file.
+  // This is a convenient access hurdle, not server-side authorization: a determined visitor can
+  // still bypass client-side code. The version marker invalidates older saved approvals when changed.
+  var ACCESS_STORAGE_KEY = 'transferbrett_access_v1';
+  var ACCESS_VERSION = '2026-08-28-1';
+  var ACCESS_SALT = 'transferbrett-access-v1|';
+  var ACCESS_PASSWORD_HASH = '154c6dccbf917406e24912b19168833ba68da6196e3e6dc7a5a0780df7607bc2';
+  var accessGate = document.getElementById('accessGate');
+  var accessForm = document.getElementById('accessForm');
+  var accessInput = document.getElementById('accessPassword');
+  var accessSubmit = document.getElementById('accessSubmit');
+  var accessError = document.getElementById('accessError');
+  var appRoot = document.getElementById('app');
+
+  function hasSavedAccess(){
+    try{ return localStorage.getItem(ACCESS_STORAGE_KEY) === ACCESS_VERSION; }
+    catch(e){ return false; }
+  }
+  function showApp(){
+    accessGate.hidden = true;
+    appRoot.style.display = '';
+  }
+  function sha256Hex(value){
+    if(!window.crypto || !window.crypto.subtle) return Promise.reject(new Error('crypto-unavailable'));
+    return window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)).then(function(buffer){
+      return Array.prototype.map.call(new Uint8Array(buffer), function(b){ return b.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+
+  if(hasSavedAccess()){
+    showApp();
+  } else {
+    accessForm.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var password = accessInput.value;
+      accessError.textContent = '';
+      accessSubmit.disabled = true;
+      accessSubmit.textContent = 'Prüfe…';
+      sha256Hex(ACCESS_SALT + password).then(function(digest){
+        accessInput.value = '';
+        if(digest !== ACCESS_PASSWORD_HASH){
+          accessError.textContent = 'Das Passwort ist nicht korrekt.';
+          accessSubmit.disabled = false;
+          accessSubmit.textContent = 'Tool öffnen';
+          accessInput.focus();
+          return;
+        }
+        try{ localStorage.setItem(ACCESS_STORAGE_KEY, ACCESS_VERSION); } catch(e){}
+        showApp();
+        window.location.reload();
+      }).catch(function(){
+        accessError.textContent = 'Die Passwortprüfung wird von diesem Browser nicht unterstützt.';
+        accessSubmit.disabled = false;
+        accessSubmit.textContent = 'Tool öffnen';
+      });
+    });
+    return;
+  }
 
   // ---- require an explicit ?board=<code> so multiple simultaneous games don't collide on one link ----
   var urlBoardParam = null;

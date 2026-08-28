@@ -68,7 +68,12 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
 Live unter `https://stpeppo.github.io/Transferbrett---Kicker-Manager-Tool/`
 (GitHub Pages, `main`-Branch, Root-Ordner; `index.html` leitet auf
 `transferbrett.html` weiter). Beim Aufruf ohne `?board=` erscheint eine
-Startseite: "Neues Spiel starten" (erzeugt einen 5-stelligen Code) oder
+lokale Admin-Passwortabfrage. Nach erfolgreicher Eingabe bleibt der jeweilige
+Browser via `localStorage` dauerhaft freigegeben. Im ausgelieferten Quellcode
+liegt nur ein gesalzener SHA-256-Pruefwert, nicht das Klartextpasswort. Da
+GitHub Pages ausschliesslich statische Dateien ausliefert, ist diese Abfrage
+eine einfache Zugangshuerde und keine serverseitig erzwungene Authentifizierung.
+Danach erscheint eine Startseite: "Neues Spiel starten" (erzeugt einen 5-stelligen Code) oder
 "Beitreten" mit einem Code von Freunden. Aktueller Code + "Link kopieren"
 stehen im Header. Mitspieler brauchen nur den Link, kein Claude-Zugriff und
 kein eigenes Tool. Firebase-Live-Sync wurde bereits in einer echten
