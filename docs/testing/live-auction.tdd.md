@@ -14,7 +14,7 @@ The journeys were derived from the approved conversation plan; no separate plan 
 | Task | Test target | RED evidence | GREEN evidence |
 |---|---|---|---|
 | Auction domain transitions | `tests/auction_logic.test.js` | `node --test tests/auction_logic.test.js` failed with `Cannot find module '../auction_logic'` before production logic existed; later regression tests covered leave handling, resuming, bid history, and Firebase-omitted fields. | 24 domain tests pass after `auction_logic.js`, its authorization guards, active leave/resume handling, bid history, and Firebase round-trip normalization were implemented. |
-| Build and UI integration | `tests/auction_build_integration.test.js` | Three assertions failed because the panel, controls, build placeholder, and inlined logic did not yet exist. | All sixteen integration checks pass after rebuilding `transferbrett.html`. |
+| Build and UI integration | `tests/auction_build_integration.test.js` | Three assertions failed because the panel, controls, build placeholder, and inlined logic did not yet exist. | All seventeen integration checks pass after rebuilding `transferbrett.html`. |
 | Nominator skip | `tests/auction_logic.test.js` | The new test failed with `TypeError: skipNominator is not a function`. | The same test passes after the transition was added. |
 
 ## Guarantees
@@ -43,11 +43,12 @@ The journeys were derived from the approved conversation plan; no separate plan 
 | 20 | A finished auction can resume with the same participants, current nominator, budgets, and purchases. | Unit + Integration | PASS |
 | 21 | Every accepted bid is retained and rendered in an animated, reduced-motion-safe history while minimum and highest bid remain distinct. | Unit + Integration | PASS |
 | 22 | The complete nomination order contains every assigned participant exactly once and is fixed explicitly before the auction starts. | Unit + Integration | PASS |
+| 23 | A browser sees numeric start and remaining budgets only for its assigned team; foreign budget displays are masked while validation remains active. | Integration | PASS |
 
 ## Commands and coverage
 
 - Build: bundled Python `build_transferbrett.py` — PASS.
-- Tests: bundled Node `--test --experimental-test-coverage tests/auction_logic.test.js tests/auction_build_integration.test.js` — 40/40 PASS at the recorded full-suite checkpoint.
+- Tests: bundled Node `--test --experimental-test-coverage tests/auction_logic.test.js tests/auction_build_integration.test.js` — 41/41 PASS at the recorded full-suite checkpoint.
 - Domain coverage at that checkpoint: 98.37% lines, 83.80% branches, 97.06% functions.
 - Syntax: bundled Node `--check auction_logic.js` — PASS.
 

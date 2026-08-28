@@ -1627,6 +1627,12 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   // start budget, and a team that overpays ends up below it.
   function teamRemaining(teamId){ var t = teamById(teamId); return t ? t.balance : 0; }
   function teamById(id){ return STATE.teams.filter(function(t){return t.id===id;})[0]; }
+  function myAssignedTeamId(){
+    var presence = STATE.presence && STATE.presence[myToken];
+    return presence && presence.teamId ? presence.teamId : null;
+  }
+  function canViewTeamBudget(teamId){ return !!teamId && myAssignedTeamId()===teamId; }
+  function budgetVisibilityText(teamId, amount){ return canViewTeamBudget(teamId) ? fmtMio(amount) : 'privat'; }
   function purchasedIds(){ return Object.keys(STATE.purchases); }
   function auctionActive(){ return !!(STATE.auction && STATE.auction.active); }
   function auctionLotActive(){ return !!(auctionActive() && STATE.auction.lot); }
@@ -1787,7 +1793,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var teamSel = document.createElement('select');
     STATE.teams.forEach(function(t){
       var o = document.createElement('option'); o.value=t.id;
-      o.textContent = t.name + '  (Rest: ' + fmtMio(teamRemaining(t.id)) + ')';
+      o.textContent = t.name + '  (Budget: ' + budgetVisibilityText(t.id, teamRemaining(t.id)) + ')';
       teamSel.appendChild(o);
     });
     if(presetTeamId) teamSel.value = presetTeamId;
@@ -1808,10 +1814,12 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       var price = parseFloat(priceInp.value)||0;
       var after = rem - price;
       if(after < 0){
-        hint.className='budget-hint err'; hint.textContent = 'Reicht nicht: nur noch ' + fmtMio(rem) + ' übrig.';
+        hint.className='budget-hint err';
+        hint.textContent = canViewTeamBudget(teamSel.value) ? 'Reicht nicht: nur noch ' + fmtMio(rem) + ' übrig.' : 'Das private Teambudget reicht für diesen Kauf nicht aus.';
         okBtn.disabled = true;
       } else {
-        hint.className='budget-hint'; hint.textContent = 'Verbleibend danach: ' + fmtMio(after);
+        hint.className='budget-hint';
+        hint.textContent = canViewTeamBudget(teamSel.value) ? 'Verbleibend danach: ' + fmtMio(after) : 'Der Kauf liegt innerhalb des privaten Teambudgets.';
         okBtn.disabled = false;
       }
     }
@@ -2041,7 +2049,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var teamSel = document.createElement('select');
     STATE.teams.forEach(function(t){
       var o = document.createElement('option'); o.value=t.id;
-      o.textContent = t.name + '  (Rest: ' + fmtMio(teamRemaining(t.id)) + ')';
+      o.textContent = t.name + '  (Budget: ' + budgetVisibilityText(t.id, teamRemaining(t.id)) + ')';
       teamSel.appendChild(o);
     });
     teamSel.value = current.teamId;
@@ -2070,15 +2078,17 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       var after = previewRemaining(teamSel.value, price);
       var isTrade = teamSel.value !== current.teamId;
       if(after < 0){
-        hint.className='budget-hint err'; hint.textContent = 'Reicht nicht: Budget würde auf ' + fmtMio(after) + ' fallen.';
+        hint.className='budget-hint err';
+        hint.textContent = canViewTeamBudget(teamSel.value) ? 'Reicht nicht: Budget würde auf ' + fmtMio(after) + ' fallen.' : 'Das private Budget des gewählten Teams reicht nicht aus.';
         okBtn.disabled = true;
       } else if(isTrade){
         var seller = teamById(current.teamId);
         hint.className='budget-hint';
-        hint.textContent = (seller ? seller.name : 'Verkäufer') + ' erhält ' + fmtMio(price) + ' (neuer Kontostand: ' + fmtMio(seller ? seller.balance+price : price) + '). Käufer danach: ' + fmtMio(after) + '.';
+        hint.textContent = (seller ? seller.name : 'Verkäufer') + ' erhält ' + fmtMio(price) + ' (neuer Kontostand: ' + budgetVisibilityText(current.teamId, seller ? seller.balance+price : price) + '). Käufer danach: ' + budgetVisibilityText(teamSel.value, after) + '.';
         okBtn.disabled = false;
       } else {
-        hint.className='budget-hint'; hint.textContent = 'Verbleibend danach: ' + fmtMio(after);
+        hint.className='budget-hint';
+        hint.textContent = canViewTeamBudget(teamSel.value) ? 'Verbleibend danach: ' + fmtMio(after) : 'Die Änderung liegt innerhalb des privaten Teambudgets.';
         okBtn.disabled = false;
       }
     }
@@ -2423,6 +2433,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   function renderTeamCard(team){
     var card = document.createElement('div'); card.className='team-card'; card.dataset.teamId=team.id;
     var amAdmin = isAdmin();
+    var mayViewBudget = canViewTeamBudget(team.id);
 
     var nameRow = document.createElement('div'); nameRow.style.display='flex'; nameRow.style.alignItems='center'; nameRow.style.gap='4px';
     var nameInp = document.createElement('input'); nameInp.className='team-name-input'; nameInp.value=team.name; nameInp.style.flex='1';
@@ -2488,32 +2499,42 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var pct = team.budget>0 ? Math.max(0, Math.min(100, (spent/team.budget)*100)) : 0;
     var over = remaining < 0;
     var profit = remaining > team.budget;
-    if(over) card.classList.add('over-budget');
+    if(over && mayViewBudget) card.classList.add('over-budget');
 
     var budgetRow = document.createElement('div'); budgetRow.className='budget-line';
     var budgetLbl = document.createElement('span'); budgetLbl.textContent = 'Startbudget';
-    var budgetInp = document.createElement('input'); budgetInp.type='number'; budgetInp.min='0'; budgetInp.step='1';
-    budgetInp.value = team.budget;
-    budgetInp.disabled = !amAdmin || normalChangesLocked();
-    budgetInp.style.width='64px'; budgetInp.style.padding='3px 6px'; budgetInp.style.borderRadius='6px';
-    budgetInp.style.border='1px solid var(--line)'; budgetInp.style.background='var(--surface-alt)'; budgetInp.style.textAlign='right';
-    budgetInp.addEventListener('change', function(){
-      var v = parseFloat(budgetInp.value);
-      if(!isNaN(v) && v>=0){ var delta = v - team.budget; team.budget = v; team.balance += delta; render(); persist(); }
-      else { budgetInp.value = team.budget; }
-    });
-    budgetRow.appendChild(budgetLbl); budgetRow.appendChild(budgetInp);
+    budgetRow.appendChild(budgetLbl);
+    if(mayViewBudget){
+      var budgetInp = document.createElement('input'); budgetInp.type='number'; budgetInp.min='0'; budgetInp.step='1';
+      budgetInp.value = team.budget;
+      budgetInp.disabled = !amAdmin || normalChangesLocked();
+      budgetInp.style.width='64px'; budgetInp.style.padding='3px 6px'; budgetInp.style.borderRadius='6px';
+      budgetInp.style.border='1px solid var(--line)'; budgetInp.style.background='var(--surface-alt)'; budgetInp.style.textAlign='right';
+      budgetInp.addEventListener('change', function(){
+        var v = parseFloat(budgetInp.value);
+        if(!isNaN(v) && v>=0){ var delta = v - team.budget; team.budget = v; team.balance += delta; render(); persist(); }
+        else { budgetInp.value = team.budget; }
+      });
+      budgetRow.appendChild(budgetInp);
+    } else {
+      var privateBudget = document.createElement('span'); privateBudget.className='num'; privateBudget.textContent='Privat';
+      budgetRow.appendChild(privateBudget);
+    }
     card.appendChild(budgetRow);
 
     var line = document.createElement('div'); line.className='budget-line';
-    var restLabel = 'Rest' + (profit ? ' (Verkaufsgewinn!)' : '');
-    line.innerHTML = '<span>' + restLabel + '</span><span class="num" style="color:' + (profit?'var(--gold)':(over?'var(--sold)':'inherit')) + '">' + fmtMio(remaining) + ' / ' + fmtMio(team.budget) + '</span>';
+    var restLabel = mayViewBudget ? 'Rest' + (profit ? ' (Verkaufsgewinn!)' : '') : 'Restbudget';
+    line.innerHTML = mayViewBudget
+      ? '<span>' + restLabel + '</span><span class="num" style="color:' + (profit?'var(--gold)':(over?'var(--sold)':'inherit')) + '">' + fmtMio(remaining) + ' / ' + fmtMio(team.budget) + '</span>'
+      : '<span>' + restLabel + '</span><span class="num">Privat</span>';
     card.appendChild(line);
 
-    var bar = document.createElement('div'); bar.className='budget-bar';
-    var fill = document.createElement('div'); fill.className='budget-bar-fill' + (over?' over':(pct>80?' warn':''));
-    fill.style.width = pct + '%';
-    bar.appendChild(fill); card.appendChild(bar);
+    if(mayViewBudget){
+      var bar = document.createElement('div'); bar.className='budget-bar';
+      var fill = document.createElement('div'); fill.className='budget-bar-fill' + (over?' over':(pct>80?' warn':''));
+      fill.style.width = pct + '%';
+      bar.appendChild(fill); card.appendChild(bar);
+    }
 
     var ids = purchasedIds().filter(function(pid){ return STATE.purchases[pid].teamId===team.id; });
     ids.sort(function(a,b){ return STATE.purchases[b].price - STATE.purchases[a].price; });

@@ -132,6 +132,17 @@ test('auction start fixes the complete participant order by explicit selection',
   assert.doesNotMatch(template, /auctionStartNominator/);
 });
 
+test('each browser only sees the budget of its assigned team', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /function myAssignedTeamId\(\)/);
+  assert.match(template, /function canViewTeamBudget\(teamId\)/);
+  assert.match(template, /var mayViewBudget = canViewTeamBudget\(team\.id\)/);
+  assert.match(template, /privateBudget\.textContent='Privat'/);
+  assert.match(template, /if\(mayViewBudget\)\{[\s\S]*?className='budget-bar'/);
+  assert.match(template, /budgetVisibilityText\(t\.id, teamRemaining\(t\.id\)\)/);
+});
+
 test('build script inlines the reusable auction domain logic', () => {
   const buildScript = read('build_transferbrett.py');
 

@@ -87,6 +87,9 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
 - Mindestgebot und aktuelles Hoechstgebot werden getrennt dargestellt. Alle
   Gebote einer Runde erscheinen mit Person, Team, Betrag und Zeitpunkt in
   einem animierten Gebotsverlauf; reduzierte Bewegung wird respektiert.
+- Jeder Browser sieht Start- und Restbudget nur fuer sein selbst zugeordnetes
+  Team. Bei fremden Teams und in Admin-Auswahldialogen werden Kontostaende als
+  privat maskiert; die interne Pruefung auf ausreichendes Budget bleibt aktiv.
 - Die Adminrolle kann auch waehrend einer laufenden Auktion uebernommen oder
   freigegeben werden. Der Wechsel wird unmittelbar per Firebase-Transaktion
   an alle verbundenen Browser verteilt.
