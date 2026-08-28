@@ -9,11 +9,20 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
 - `transferbrett_template.html` – der eigentliche Quellcode (HTML/CSS/JS in
   einer Datei). Enthaelt die Platzhalter `__STATE_JSON__` und
   `__PLAYERS_JSON__`, die beim Bauen ersetzt werden. **Hier wird entwickelt.**
-- `players_slim.json` – die 564 Spieler (Name, Verein, Position, Marktwert,
-  Punkte/Note Vorsaison, ausgewaehlte Torschuetzen-Statistiken).
-- `build_transferbrett.py` – baut `transferbrett.html` aus den beiden
-  obigen Dateien mit frischem Startzustand (3 leere Teams, kein Admin).
-  Einfach ausfuehren: `python3 build_transferbrett.py`
+- `players_slim.json` – die Spielerliste (Name, Verein, Position, Marktwert,
+  Punkte/Note Vorsaison). Wird aus einem kicker.de-CSV-Export erzeugt, siehe
+  `import_players_csv.py` unten.
+- `import_players_csv.py` – wandelt einen kicker.de-Spieler-Export (CSV,
+  Semikolon-getrennt, Spalten `ID;Vorname;Nachname;Angezeigter Name (kurz);
+  Angezeigter Name;Verein;Position;Marktwert;Punkte;Notendurchschnitt`) in
+  `players_slim.json` um. Aufruf: `python3 import_players_csv.py pfad/zur/
+  export.csv`. Spieler-IDs bleiben zwischen Exports stabil (z.B.
+  `pl-k00030669`), dadurch bleiben bestehende Kaeufe/Bearbeitungen auf
+  laufenden Boards nach einem Refresh weiter zuordenbar. Danach
+  `build_transferbrett.py` erneut ausfuehren.
+- `build_transferbrett.py` – baut `transferbrett.html` aus `transferbrett_
+  template.html` + `players_slim.json` mit frischem Startzustand (3 leere
+  Teams, kein Admin). Einfach ausfuehren: `python3 build_transferbrett.py`
 - `transferbrett.html` – die fertig gebaute, eigenstaendige Datei (kann
   direkt im Browser geoeffnet oder statisch gehostet werden).
 
@@ -46,23 +55,24 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
   `?board=<name>` in der URL (Standard: `default`).
 - Export laeuft jetzt als normaler Browser-Download (Blob + `<a download>`)
   statt ueber die claude.ai-Downloads-Capability.
+- Kader-Zeilen zeigen die Position (TW/ABW/MF/ST) als Badge vor dem Namen.
+- Anwesende koennen sich optional einem Team zuordnen (Dropdown in der
+  Anwesenheitsliste); Team-Karte zeigt "Gespielt von: ...". Rein
+  informativ, keine Rechtepruefung daran gekoppelt.
+- Presence liegt auf einem eigenen Firebase-Pfad, getrennt vom Spielstand
+  (Teams/Kaeufe/Verlauf/Admin-Status) -- ein harmloses "ich bin noch da"
+  kann so nie mehr Kaeufe oder den Admin-Claim eines anderen ueberschreiben.
 
-## Naechster Schritt: Hosting
+## Hosting
 
-`transferbrett.html` ist noch nicht oeffentlich erreichbar. Empfehlung:
-**GitHub Pages** fuer dieses Repo aktivieren (Settings -> Pages -> Source:
-Deploy from branch -> `main`). Danach ist die Datei unter
-`https://stpeppo.github.io/Transferbrett---Kicker-Manager-Tool/transferbrett.html`
-erreichbar (kein `index.html` vorhanden, daher der volle Dateiname in der
-URL). Mitspieler brauchen dann nur diesen Link, kein Claude-Zugriff und
-kein eigenes Tool.
-
-**Wichtig:** Die Firebase-Live-Sync konnte bisher nicht Ende-zu-Ende in
-einer echten Browser-Session gegen das echte Projekt getestet werden (die
-Entwicklungsumgebung, in der dieser Code entstand, hat keinen Zugriff auf
-Google-/Firebase-Domains). Vor dem ersten echten Spielabend unbedingt mit
-zwei parallel geoeffneten Browserfenstern (gleicher `?board=`-Wert)
-gegentesten.
+Live unter `https://stpeppo.github.io/Transferbrett---Kicker-Manager-Tool/`
+(GitHub Pages, `main`-Branch, Root-Ordner; `index.html` leitet auf
+`transferbrett.html` weiter). Beim Aufruf ohne `?board=` erscheint eine
+Startseite: "Neues Spiel starten" (erzeugt einen 5-stelligen Code) oder
+"Beitreten" mit einem Code von Freunden. Aktueller Code + "Link kopieren"
+stehen im Header. Mitspieler brauchen nur den Link, kein Claude-Zugriff und
+kein eigenes Tool. Firebase-Live-Sync wurde bereits in einer echten
+Mehr-Geraete-Session bestaetigt (inkl. mobil).
 
 ## Testen vor jeder Veroeffentlichung
 
