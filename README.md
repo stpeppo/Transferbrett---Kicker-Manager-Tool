@@ -79,6 +79,9 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
   Anwesenheit sowie einer laufenden Auktionsreihenfolge entfernen. Bereits
   abgegebene Gebote bleiben gueltig; Nominierungsrecht und gegebenenfalls die
   Adminrolle werden ohne Unterbrechung weitergegeben.
+- Die Adminrolle kann auch waehrend einer laufenden Auktion uebernommen oder
+  freigegeben werden. Der Wechsel wird unmittelbar per Firebase-Transaktion
+  an alle verbundenen Browser verteilt.
 
 ## Hosting
 

@@ -42,6 +42,15 @@ test('auction writes are connectivity-gated and use transactional state updates'
   assert.doesNotMatch(template, /stateRef\.set\(coreStateForSync\(\)\)/);
 });
 
+test('admin takeover remains available and transactional during a live auction', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /function changeAdmin\(nextToken\)/);
+  assert.match(template, /changeAdmin\(myToken\)/);
+  assert.match(template, /next\.adminToken = nextToken \|\| null/);
+  assert.doesNotMatch(template, /adminBtn\.disabled = normalChangesLocked\(\)/);
+});
+
 test('the admin can assign teams to every present browser before the auction', () => {
   const template = read('transferbrett_template.html');
 

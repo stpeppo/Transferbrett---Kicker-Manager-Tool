@@ -959,6 +959,36 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     }, false);
   }
 
+  function changeAdmin(nextToken){
+    if(!auctionActive()){
+      STATE.adminToken = nextToken || null;
+      render(); persist();
+      return;
+    }
+    if(!stateRef || !firebaseConnected){
+      openInfoModal('Während einer laufenden Auktion kann der Admin nur mit aktiver Verbindung geändert werden.', 'Adminwechsel nicht möglich');
+      return;
+    }
+    if(auctionBusy) return;
+    auctionBusy = true;
+    render();
+    var adminChangeError = null;
+    stateRef.transaction(function(remoteCore){
+      if(!remoteCore){ adminChangeError=new Error('Der gemeinsame Spielstand ist noch nicht verfügbar.'); return; }
+      var next = {};
+      Object.keys(remoteCore).forEach(function(key){ next[key]=remoteCore[key]; });
+      next.adminToken = nextToken || null;
+      adminChangeError = null;
+      return next;
+    }, function(error, committed){
+      auctionBusy = false;
+      if(error){ openInfoModal('Der Adminwechsel ist fehlgeschlagen: ' + error.message, 'Verbindung fehlgeschlagen'); render(); return; }
+      if(!committed){ openInfoModal((adminChangeError && adminChangeError.message) || 'Der Adminwechsel konnte nicht gespeichert werden.', 'Adminwechsel fehlgeschlagen'); render(); return; }
+      setAuctionMessage(nextToken ? 'Die Adminrolle wurde übernommen.' : 'Die Adminrolle wurde freigegeben.', true);
+      render();
+    }, false);
+  }
+
   try{
     if(window.firebase && FIREBASE_CONFIG.apiKey){
       firebase.initializeApp(FIREBASE_CONFIG);
@@ -2017,15 +2047,15 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var adminBtn = document.createElement('button'); adminBtn.className='btn small';
     if(amAdmin){
       adminBtn.textContent = 'Admin abgeben';
-      adminBtn.addEventListener('click', function(){ STATE.adminToken = null; render(); persist(); });
+      adminBtn.addEventListener('click', function(){ changeAdmin(null); });
     } else {
       adminBtn.textContent = STATE.adminToken ? 'Admin übernehmen' : 'Admin werden';
       adminBtn.classList.add('primary');
-      adminBtn.addEventListener('click', function(){ STATE.adminToken = myToken; render(); persist(); });
+      adminBtn.addEventListener('click', function(){ changeAdmin(myToken); });
     }
     adminBtn.style.width='100%'; adminBtn.style.marginTop='-2px';
-    adminBtn.disabled = normalChangesLocked();
-    if(normalChangesLocked()) adminBtn.title='Der Admin bleibt während der Live-Auktion festgelegt';
+    adminBtn.disabled = auctionBusy || (auctionActive() && (!stateRef || !firebaseConnected));
+    if(auctionActive() && (!stateRef || !firebaseConnected)) adminBtn.title='Während der Auktion ist für den Adminwechsel eine aktive Verbindung erforderlich';
     card.appendChild(adminBtn);
 
     var remaining = team.balance;
