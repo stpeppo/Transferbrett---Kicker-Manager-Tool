@@ -33,6 +33,16 @@ test('auction panel is positioned directly between teams and the player table', 
   assert.ok(auctionIndex < tableIndex);
 });
 
+test('player search and filters sit between the auction and player table', () => {
+  const template = read('transferbrett_template.html');
+  const auctionIndex = template.indexOf('id="auctionPanel"');
+  const controlsIndex = template.indexOf('id="playerControls"');
+  const tableIndex = template.indexOf('id="tableWrap"');
+
+  assert.ok(auctionIndex < controlsIndex);
+  assert.ok(controlsIndex < tableIndex);
+});
+
 test('auction writes are connectivity-gated and use transactional state updates', () => {
   const template = read('transferbrett_template.html');
 

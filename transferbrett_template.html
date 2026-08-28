@@ -419,40 +419,6 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     </div>
     <div class="admin-banner" id="adminBanner"></div>
     <div class="presence-row" id="presenceRow"></div>
-    <div class="controls">
-      <input type="search" id="searchInput" placeholder="Spieler suchen…" autocomplete="off">
-      <select id="posFilter"><option value="">Alle Positionen</option></select>
-      <select id="clubFilter"><option value="">Alle Vereine</option></select>
-      <select id="sortSelect">
-        <option value="pt_desc">Sortierung: Punkte ↓</option>
-        <option value="pt_asc">Sortierung: Punkte ↑</option>
-        <option value="no_asc">Sortierung: Note ↑ (beste zuerst)</option>
-        <option value="no_desc">Sortierung: Note ↓</option>
-        <option value="v_desc">Sortierung: Marktwert ↓</option>
-        <option value="v_asc">Sortierung: Marktwert ↑</option>
-        <option value="p_asc">Sortierung: Position (TW→ST)</option>
-        <option value="p_desc">Sortierung: Position (ST→TW)</option>
-        <option value="name_asc">Sortierung: Name A–Z</option>
-        <option value="club_asc">Sortierung: Verein A–Z</option>
-      </select>
-      <label class="toggle-chip" id="newChipLbl"><input type="checkbox" id="onlyNew"><span>● nur Neuzugänge</span></label>
-      <label class="toggle-chip" id="hideSoldLbl"><input type="checkbox" id="hideSold" checked><span>Vergebene ausblenden</span></label>
-      <button class="btn small primary" id="addPlayerBtn" style="display:none;">+ Spieler</button>
-      <span class="result-count" id="resultCount"></span>
-    </div>
-    <div class="legend">
-      <span><i style="background:var(--new)"></i>Neuzugang / kein Bundesliga-Einsatz 25/26</span>
-      <span><i style="background:var(--accent)"></i>Note ≤ 2,49</span>
-      <span><i style="background:var(--gold)"></i>Note 2,5–3,99</span>
-      <span><i style="background:var(--sold)"></i>Note ≥ 4</span>
-    </div>
-    <div class="bulk-bar" id="bulkBar">
-      <span id="bulkCount">0 ausgewählt</span>
-      <span style="color:var(--ink-dim)">Team:</span>
-      <select id="bulkTeamSelect"></select>
-      <button class="btn primary small" id="bulkAddBtn">Zu Marktwert kaufen</button>
-      <button class="btn small" id="bulkClearBtn">Auswahl aufheben</button>
-    </div>
   </div>
 
   <div id="mainView">
@@ -498,6 +464,41 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         <div class="auction-offline" id="auctionOffline" style="display:none;">Live-Auktionen benötigen eine aktive Firebase-Verbindung.</div>
       </div>
     </section>
+
+    <div class="controls" id="playerControls">
+      <input type="search" id="searchInput" placeholder="Spieler suchen…" autocomplete="off">
+      <select id="posFilter"><option value="">Alle Positionen</option></select>
+      <select id="clubFilter"><option value="">Alle Vereine</option></select>
+      <select id="sortSelect">
+        <option value="pt_desc">Sortierung: Punkte ↓</option>
+        <option value="pt_asc">Sortierung: Punkte ↑</option>
+        <option value="no_asc">Sortierung: Note ↑ (beste zuerst)</option>
+        <option value="no_desc">Sortierung: Note ↓</option>
+        <option value="v_desc">Sortierung: Marktwert ↓</option>
+        <option value="v_asc">Sortierung: Marktwert ↑</option>
+        <option value="p_asc">Sortierung: Position (TW→ST)</option>
+        <option value="p_desc">Sortierung: Position (ST→TW)</option>
+        <option value="name_asc">Sortierung: Name A–Z</option>
+        <option value="club_asc">Sortierung: Verein A–Z</option>
+      </select>
+      <label class="toggle-chip" id="newChipLbl"><input type="checkbox" id="onlyNew"><span>● nur Neuzugänge</span></label>
+      <label class="toggle-chip" id="hideSoldLbl"><input type="checkbox" id="hideSold" checked><span>Vergebene ausblenden</span></label>
+      <button class="btn small primary" id="addPlayerBtn" style="display:none;">+ Spieler</button>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--new)"></i>Neuzugang / kein Bundesliga-Einsatz 25/26</span>
+      <span><i style="background:var(--accent)"></i>Note ≤ 2,49</span>
+      <span><i style="background:var(--gold)"></i>Note 2,5–3,99</span>
+      <span><i style="background:var(--sold)"></i>Note ≥ 4</span>
+    </div>
+    <div class="bulk-bar" id="bulkBar">
+      <span id="bulkCount">0 ausgewählt</span>
+      <span style="color:var(--ink-dim)">Team:</span>
+      <select id="bulkTeamSelect"></select>
+      <button class="btn primary small" id="bulkAddBtn">Zu Marktwert kaufen</button>
+      <button class="btn small" id="bulkClearBtn">Auswahl aufheben</button>
+    </div>
 
     <div class="table-wrap" id="tableWrap">
       <table>
