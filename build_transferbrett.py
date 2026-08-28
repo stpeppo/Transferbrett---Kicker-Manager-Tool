@@ -11,12 +11,15 @@ import json
 
 TEMPLATE = "transferbrett_template.html"
 PLAYERS = "players_slim.json"
+AUCTION_LOGIC = "auction_logic.js"
 OUT = "transferbrett.html"
 
 with open(TEMPLATE, encoding="utf-8") as f:
     tpl = f.read()
 with open(PLAYERS, encoding="utf-8") as f:
     players_json = f.read()
+with open(AUCTION_LOGIC, encoding="utf-8") as f:
+    auction_logic = f.read()
 
 teams = [
     {"id": "team%d" % i, "name": "Team %d" % i, "budget": 100, "balance": 100, "formation": None}
@@ -32,11 +35,16 @@ state = json.dumps(
         "customPlayers": [],
         "deletedPlayers": [],
         "presence": {},
+        "auction": None,
     },
     ensure_ascii=False,
 )
 
-out = tpl.replace("__STATE_JSON__", state).replace("__PLAYERS_JSON__", players_json)
+out = (
+    tpl.replace("__STATE_JSON__", state)
+    .replace("__PLAYERS_JSON__", players_json)
+    .replace("__AUCTION_LOGIC__", auction_logic)
+)
 with open(OUT, "w", encoding="utf-8") as f:
     f.write(out)
 

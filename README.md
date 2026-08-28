@@ -62,6 +62,17 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
 - Presence liegt auf einem eigenen Firebase-Pfad, getrennt vom Spielstand
   (Teams/Kaeufe/Verlauf/Admin-Status) -- ein harmloses "ich bin noch da"
   kann so nie mehr Kaeufe oder den Admin-Claim eines anderen ueberschreiben.
+- Live-Auktionsmodus: Der Admin startet eine Sitzung mit frei waehlbarem
+  Startbudget und festem Gebotsschritt. Alle aktuell anwesenden Browser mit
+  Teamzuordnung werden als Teilnehmer uebernommen. Eine ausgewaehlte oder
+  zufaellige Startperson legt einen unvergebenen Spieler per Drag-and-drop
+  (mobil alternativ per "Auflegen") auf den virtuellen Auktionsplatz. Danach
+  koennen alle Teilnehmer live fuer ihr Team bieten. Der Admin erteilt den
+  Zuschlag; Kauf, Budget und Verlauf werden in derselben Firebase-Transaktion
+  aktualisiert und das Nominierungsrecht wandert zur naechsten Person.
+- Waehrend einer Live-Auktion sind konkurrierende Direktkaeufe und strukturelle
+  Aenderungen gesperrt. Gebote laufen ausschliesslich online und transaktional;
+  ein Offline-Fallback wird fuer Auktionen bewusst nicht angeboten.
 
 ## Hosting
 

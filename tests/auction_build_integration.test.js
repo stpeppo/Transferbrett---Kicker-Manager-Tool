@@ -1,0 +1,77 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const root = path.resolve(__dirname, '..');
+
+function read(name) {
+  return fs.readFileSync(path.join(root, name), 'utf8');
+}
+
+test('template exposes the live auction panel and its primary controls', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /id="auctionPanel"/);
+  assert.match(template, /id="startAuctionBtn"/);
+  assert.match(template, /id="auctionDropZone"/);
+  assert.match(template, /id="auctionBidBtn"/);
+});
+
+test('auction writes are connectivity-gated and use transactional state updates', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /ref\('\.info\/connected'\)/);
+  assert.match(template, /stateRef\.transaction\(/);
+  assert.match(template, /actorToken:\s*myToken/);
+  assert.doesNotMatch(template, /stateRef\.set\(coreStateForSync\(\)\)/);
+});
+
+test('the admin can assign teams to every present browser before the auction', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /function setPresenceTeam\(/);
+  assert.match(template, /e\.tok===myToken \|\| isAdmin\(\)/);
+  assert.match(template, /presenceRef\.child\(token\)\.update\(\{teamId:/);
+});
+
+test('local cached state is isolated by board code', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /var LS_KEY = 'transferbrett_state_v3:' \+ BOARD_ID/);
+  assert.ok(template.indexOf('var BOARD_ID = getBoardId()') < template.indexOf('localStorage.getItem(LS_KEY)'));
+  assert.doesNotMatch(template, /var LS_KEY = 'transferbrett_state_v2'/);
+});
+
+test('build script inlines the reusable auction domain logic', () => {
+  const buildScript = read('build_transferbrett.py');
+
+  assert.match(buildScript, /auction_logic\.js/);
+  assert.match(buildScript, /__AUCTION_LOGIC__/);
+});
+
+test('generated standalone HTML contains auction logic without unresolved placeholders', () => {
+  const built = read('transferbrett.html');
+
+  assert.match(built, /TransferbrettAuction/);
+  assert.match(built, /id="auctionPanel"/);
+  assert.doesNotMatch(built, /__AUCTION_LOGIC__/);
+});
+
+test('every inline JavaScript block in the standalone build parses successfully', () => {
+  const built = read('transferbrett.html');
+  const scriptPattern = /<script([^>]*)>([\s\S]*?)<\/script>/g;
+  let match;
+  let parsed = 0;
+
+  while ((match = scriptPattern.exec(built)) !== null) {
+    if (/type="application\/json"/.test(match[1]) || !match[2].trim()) continue;
+    assert.doesNotThrow(() => new vm.Script(match[2]));
+    parsed += 1;
+  }
+
+  assert.ok(parsed >= 2, 'expected auction logic and application script blocks');
+});

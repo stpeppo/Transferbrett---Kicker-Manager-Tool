@@ -162,6 +162,52 @@ h1{
 }
 .bulk-bar.show{display:flex;}
 
+/* ---------- Live auction ---------- */
+.auction-section{
+  margin-top:22px; padding:16px; border:1px solid var(--line); border-radius:14px;
+  background:
+    radial-gradient(700px 240px at 0% 0%, var(--accent-dim), transparent 68%),
+    radial-gradient(520px 220px at 100% 100%, var(--gold-dim), transparent 70%),
+    var(--surface);
+  box-shadow:var(--shadow);
+}
+.auction-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+.auction-head h2{font-family:"Oswald",sans-serif; font-size:20px; margin:0;}
+.auction-status{display:inline-flex; align-items:center; gap:7px; color:var(--ink-dim); font-size:12px;}
+.auction-status-dot{width:8px; height:8px; border-radius:50%; background:var(--line);}
+.auction-status.live .auction-status-dot{background:var(--sold); box-shadow:0 0 0 4px var(--sold-dim); animation:pulse 1.2s ease-in-out infinite;}
+.auction-session-meta{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; color:var(--ink-dim); font-size:12px;}
+.auction-person{padding:4px 9px; border-radius:999px; background:var(--surface-alt); border:1px solid var(--line);}
+.auction-person.current{background:var(--gold-dim); color:var(--gold); border-color:var(--gold); font-weight:600;}
+.auction-drop-zone{
+  min-height:150px; margin-top:14px; padding:18px; display:flex; align-items:center; justify-content:center;
+  border:2px dashed var(--line); border-radius:13px; background:color-mix(in srgb, var(--surface) 86%, transparent);
+  text-align:center; transition:border-color .15s, background .15s, transform .15s;
+}
+.auction-drop-zone.ready{border-color:var(--gold); background:var(--gold-dim);}
+.auction-drop-zone.drag-over{border-color:var(--accent); background:var(--accent-dim); transform:scale(1.005);}
+.auction-empty-title{font-family:"Oswald",sans-serif; font-size:17px; margin-bottom:4px;}
+.auction-empty-sub{color:var(--ink-dim); font-size:12.5px; max-width:520px;}
+.auction-lot{width:100%; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:18px; align-items:center; text-align:left;}
+.auction-player-name{font-family:"Oswald",sans-serif; font-size:25px; font-weight:700;}
+.auction-player-meta{color:var(--ink-dim); font-size:12.5px; margin-top:3px;}
+.auction-price{text-align:right; min-width:160px;}
+.auction-price-label{color:var(--ink-dim); font-size:11px; text-transform:uppercase; letter-spacing:.05em;}
+.auction-price-value{font-family:"IBM Plex Mono",monospace; font-size:25px; font-weight:700; color:var(--gold);}
+.auction-leader{font-size:12px; color:var(--ink-dim); margin-top:3px;}
+.auction-actions{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:12px;}
+.auction-bid-info{font-size:12px; color:var(--ink-dim);}
+.auction-admin-actions{display:flex; gap:7px; flex-wrap:wrap; margin-left:auto;}
+.auction-message{min-height:18px; margin-top:8px; font-size:12px; font-weight:600; color:var(--sold);}
+.auction-offline{margin-top:10px; padding:8px 10px; border-radius:8px; background:var(--sold-dim); color:var(--sold); font-size:12px; font-weight:600;}
+@media (max-width:640px){
+  .save-indicator{width:100%; white-space:normal; flex-wrap:wrap;}
+  .auction-lot{grid-template-columns:1fr; text-align:center;}
+  .auction-price{text-align:center; min-width:0;}
+  .auction-actions{justify-content:center;}
+  .auction-admin-actions{width:100%; justify-content:center; margin-left:0;}
+}
+
 /* ---------- Teams band ---------- */
 .teams-section{margin-top:22px;}
 .teams-head{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:10px;}
@@ -407,6 +453,34 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   </div>
 
   <div id="mainView">
+    <section class="auction-section" id="auctionPanel">
+      <div class="auction-head">
+        <div>
+          <h2>Live-Auktion</h2>
+          <div class="auction-status" id="auctionStatus"><span class="auction-status-dot"></span><span id="auctionStatusText">Noch nicht gestartet</span></div>
+        </div>
+        <button class="btn primary" id="startAuctionBtn" type="button">Auktion starten</button>
+      </div>
+      <div id="auctionSessionContent" style="display:none;">
+        <div class="auction-session-meta" id="auctionSessionMeta"></div>
+        <div class="auction-drop-zone" id="auctionDropZone">
+          <div id="auctionLotContent"></div>
+        </div>
+        <div class="auction-actions">
+          <div class="auction-bid-info" id="auctionBidInfo"></div>
+          <button class="btn primary" id="auctionBidBtn" type="button" style="display:none;">Bieten</button>
+          <div class="auction-admin-actions" id="auctionAdminActions" style="display:none;">
+            <button class="btn small" id="auctionSkipBtn" type="button">Person überspringen</button>
+            <button class="btn small danger" id="auctionCancelBtn" type="button">Runde abbrechen</button>
+            <button class="btn small primary" id="auctionFinalizeBtn" type="button">Zuschlag erteilen</button>
+            <button class="btn small danger" id="auctionEndBtn" type="button">Auktion beenden</button>
+          </div>
+        </div>
+        <div class="auction-message" id="auctionMessage" role="alert" aria-live="polite"></div>
+        <div class="auction-offline" id="auctionOffline" style="display:none;">Live-Auktionen benötigen eine aktive Firebase-Verbindung.</div>
+      </div>
+    </section>
+
     <div class="teams-section">
       <div class="teams-head">
         <h2>Teams</h2>
@@ -459,6 +533,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script id="state-data" type="application/json">__STATE_JSON__</script>
 <script id="players-data" type="application/json">__PLAYERS_JSON__</script>
+<script>__AUCTION_LOGIC__</script>
 <script>
 (function(){
   "use strict";
@@ -619,9 +694,18 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   }
   function setMyTeam(teamId){
     if(!myName) return;
+    if(STATE.auction && STATE.auction.active) return;
     if(!STATE.presence[myToken]) STATE.presence[myToken] = {name: myName, lastSeen: Date.now(), teamId: null};
     STATE.presence[myToken].teamId = teamId || null;
-    render(); persist();
+    STATE.presence[myToken].lastSeen = Date.now();
+    render(); saveLocal(); syncPresenceRemote(true);
+  }
+  function setPresenceTeam(token, teamId){
+    if(token===myToken){ setMyTeam(teamId); return; }
+    if(!isAdmin() || auctionActive() || !presenceRef || !firebaseConnected || !STATE.presence[token]) return;
+    presenceRef.child(token).update({teamId:teamId || null}).catch(function(error){
+      openInfoModal('Die Teamzuordnung konnte nicht gespeichert werden: ' + error.message, 'Verbindung fehlgeschlagen');
+    });
   }
   function joinPresence(name){
     name = (name||'').trim().slice(0,40);
@@ -632,7 +716,17 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     render(); persist();
   }
 
-  var LS_KEY = 'transferbrett_state_v2';
+  function getBoardId(){
+    try{
+      var v = new URLSearchParams(window.location.search).get('board');
+      if(v){ var clean = v.replace(/[^a-zA-Z0-9_-]/g,'').slice(0,60); if(clean) return clean; }
+    } catch(e){}
+    return 'default';
+  }
+  var BOARD_ID = getBoardId();
+  // Every game needs its own browser cache. A global key would seed a newly-created Firebase board
+  // with the teams and purchases from whichever game this browser opened previously.
+  var LS_KEY = 'transferbrett_state_v3:' + BOARD_ID;
   try{
     var lsRaw = localStorage.getItem(LS_KEY);
     if(lsRaw){
@@ -712,6 +806,19 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     if(typeof STATE.adminToken !== 'string') STATE.adminToken = null;
     if(!Array.isArray(STATE.history)) STATE.history = [];
 
+    // live auction session; detailed transition validation lives in auction_logic.js
+    if(!STATE.auction || typeof STATE.auction !== 'object' || Array.isArray(STATE.auction)){
+      STATE.auction = null;
+    } else if(STATE.auction.active){
+      if(!Array.isArray(STATE.auction.participants) || STATE.auction.participants.length===0){
+        STATE.auction = null;
+      } else {
+        if(typeof STATE.auction.currentNominatorToken !== 'string') STATE.auction.currentNominatorToken = STATE.auction.participants[0].token;
+        if(typeof STATE.auction.bidIncrement !== 'number' || STATE.auction.bidIncrement<=0) STATE.auction.bidIncrement = 0.1;
+        if(STATE.auction.lot && (!STATE.auction.lot.playerId || STATE.purchases[STATE.auction.lot.playerId])) STATE.auction.lot = null;
+      }
+    }
+
     // presence: who has recently been seen on this board (per-browser token -> {name, lastSeen})
     if(!STATE.presence || typeof STATE.presence !== 'object' || Array.isArray(STATE.presence)) STATE.presence = {};
     var presenceCutoff = Date.now() - (3*24*60*60*1000); // drop anyone not seen in 3 days
@@ -757,14 +864,6 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     messagingSenderId: "485233984763",
     appId: "1:485233984763:web:b2679eb591989e12789c5e"
   };
-  function getBoardId(){
-    try{
-      var v = new URLSearchParams(window.location.search).get('board');
-      if(v){ var clean = v.replace(/[^a-zA-Z0-9_-]/g,'').slice(0,60); if(clean) return clean; }
-    } catch(e){}
-    return 'default';
-  }
-  var BOARD_ID = getBoardId();
   document.getElementById('boardCodeLine').textContent = ' · Spiel-Code: ' + BOARD_ID;
   document.getElementById('copyLinkBtn').addEventListener('click', function(){
     var url = window.location.href;
@@ -792,12 +891,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     saveLocal();
   }
   function applyRemotePresence(remotePresence){
-    // Each browser is the sole writer of its OWN presence entry. A snapshot that raced our own
-    // in-flight write (e.g. slower mobile network) could otherwise briefly contain an older
-    // version of our entry and revert a just-made choice (like a team claim) on screen.
-    var mine = STATE.presence[myToken];
     STATE.presence = remotePresence || {};
-    if(mine) STATE.presence[myToken] = mine;
     normalizeState();
     render();
     saveLocal();
@@ -806,27 +900,56 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   var boardRef = null;
   var stateRef = null;
   var presenceRef = null;
+  var connectionRef = null;
+  var firebaseConnected = false;
+  var stateInitializationPending = false;
 
-  function syncPresenceRemote(){
-    if(!presenceRef || !myName) return;
-    presenceRef.child(myToken).set({name: myName, lastSeen: Date.now()}).catch(function(){});
+  function syncPresenceRemote(includeTeam){
+    if(!presenceRef || !firebaseConnected || !myName) return;
+    var mine = STATE.presence[myToken] || {};
+    var update = {name: myName, lastSeen: Date.now()};
+    // Heartbeats must never overwrite a team assignment that the admin made for this browser.
+    if(includeTeam) update.teamId = mine.teamId || null;
+    presenceRef.child(myToken).update(update).catch(function(){});
   }
 
   function persist(){
     touchPresence();
-    if(!stateRef){
+    // Auction state is changed exclusively through Firebase transactions. A normal whole-state
+    // write during a live session could otherwise overwrite a bid that arrived milliseconds ago.
+    if(STATE.auction && STATE.auction.active){
+      saveLocal();
+      setSave(firebaseConnected?'ok':'err', firebaseConnected ? 'Auktion live synchronisiert' : 'Live-Auktion offline');
+      return;
+    }
+    if(!stateRef || !firebaseConnected){
       var ok = saveLocal();
       setSave(ok?'ok':'', ok ? 'lokal im Browser gespeichert' : 'nicht gespeichert (kein Speichern verfügbar)');
       return;
     }
     setSave('busy', 'speichere…');
-    stateRef.set(coreStateForSync()).then(function(){
-      saveLocal();
-      setSave('ok', 'live gespeichert');
-    }).catch(function(){
-      saveLocal();
-      setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert');
-    });
+    var localCore = coreStateForSync();
+    var blockedByAuctionRevision = false;
+    stateRef.transaction(function(remoteCore){
+      if(remoteCore && remoteCore.auction){
+        var remoteAuction = remoteCore.auction;
+        var localAuction = localCore.auction;
+        if(remoteAuction.active || !localAuction || remoteAuction.startedAt!==localAuction.startedAt || remoteAuction.endedAt!==localAuction.endedAt){
+          blockedByAuctionRevision = true;
+          return;
+        }
+      }
+      blockedByAuctionRevision = false;
+      return localCore;
+    }, function(error, committed){
+      if(error){
+        saveLocal(); setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert'); return;
+      }
+      if(!committed && blockedByAuctionRevision){
+        setSave('err', 'Änderung verworfen: der Auktionsstand war bereits neuer'); return;
+      }
+      saveLocal(); setSave('ok', 'live gespeichert');
+    }, false);
   }
 
   try{
@@ -835,16 +958,34 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       boardRef = firebase.database().ref('boards/' + BOARD_ID);
       stateRef = boardRef.child('state');
       presenceRef = boardRef.child('presence');
+      connectionRef = firebase.database().ref('.info/connected');
+      connectionRef.on('value', function(snapshot){
+        firebaseConnected = snapshot.val()===true;
+        if(firebaseConnected){
+          setSave('ok', 'live verbunden');
+          if(myName) touchPresence();
+        } else {
+          setSave('err', 'Offline: Änderungen werden lokal gesichert');
+        }
+        render();
+      }, function(){ firebaseConnected=false; setSave('err', 'Online-Verbindung fehlgeschlagen, lokal gesichert'); render(); });
       setSave('busy', 'verbinde…');
       stateRef.on('value', function(snapshot){
         var remoteCore = snapshot.val();
         if(remoteCore === null){
-          stateRef.set(coreStateForSync()).then(function(){ setSave('ok', 'neues Board angelegt'); })
-            .catch(function(){ setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert'); saveLocal(); });
+          if(stateInitializationPending) return;
+          stateInitializationPending = true;
+          stateRef.transaction(function(currentCore){
+            return currentCore === null ? coreStateForSync() : undefined;
+          }, function(error, committed){
+            stateInitializationPending = false;
+            if(error){ setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert'); saveLocal(); return; }
+            if(committed) setSave('ok', 'neues Board angelegt');
+          }, false);
           return;
         }
         applyRemoteCoreState(remoteCore);
-        setSave('ok', 'live synchronisiert');
+        setSave(firebaseConnected?'ok':'err', firebaseConnected ? 'live synchronisiert' : 'Offline: letzter Stand lokal verfügbar');
       }, function(){
         stateRef = null;
         setSave('err', 'Online-Verbindung fehlgeschlagen, lokal gesichert');
@@ -858,7 +999,84 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   } catch(e){
     stateRef = null;
     presenceRef = null;
+    connectionRef = null;
+    firebaseConnected = false;
     setSave('', 'Offline-Modus: wird lokal im Browser gespeichert');
+  }
+  // Keep the "currently present" snapshot fresh so auction participants are not excluded simply
+  // because they watched quietly for a few minutes before the auction started.
+  setInterval(function(){ if(myName){ touchPresence(); render(); } }, 60*1000);
+
+  var auctionBusy = false;
+  var AUCTION_ERROR_TEXT = {
+    SESSION_ALREADY_ACTIVE:'Eine Auktion läuft bereits.',
+    UNAUTHORIZED_ADMIN:'Nur der aktuelle Admin darf diese Auktionsaktion ausführen.',
+    SESSION_INACTIVE:'Die Auktion ist nicht mehr aktiv.',
+    NO_ELIGIBLE_PARTICIPANTS:'Es ist noch niemand mit einem gültigen Team angemeldet.',
+    INVALID_START_NOMINATOR:'Die gewählte Startperson ist nicht mehr verfügbar.',
+    INVALID_START_BUDGET:'Bitte gib ein gültiges Startbudget ein.',
+    INVALID_BID_INCREMENT:'Dieses Gebot entspricht nicht dem festgelegten Gebotsschritt.',
+    NOT_CURRENT_NOMINATOR:'Nur die aktuell nominierende Person darf einen Spieler auflegen.',
+    LOT_ALREADY_ACTIVE:'Auf dem Auktionsplatz liegt bereits ein Spieler.',
+    NO_ACTIVE_LOT:'Aktuell liegt kein Spieler auf dem Auktionsplatz.',
+    PLAYER_ALREADY_SOLD:'Dieser Spieler ist bereits vergeben.',
+    TEAM_NOT_PARTICIPANT:'Dieser Browser gehört nicht zu den Teilnehmern der Auktion.',
+    PARTICIPANT_TEAM_MISMATCH:'Die Teamzuordnung stimmt nicht mit dem Auktionsstart überein.',
+    TEAM_ALREADY_LEADING:'Dein Team führt bereits und kann sich nicht selbst überbieten.',
+    INSUFFICIENT_BUDGET:'Das verbleibende Teambudget reicht für dieses Gebot nicht aus.',
+    STALE_BID:'Das Höchstgebot hat sich bereits geändert. Die Anzeige wurde aktualisiert.',
+    STALE_LOT:'Die Auktionsrunde hat sich bereits geändert.',
+    NO_WINNING_BID:'Es liegt noch kein Gebot vor.'
+  };
+  function setAuctionMessage(text, good){
+    var el = document.getElementById('auctionMessage');
+    el.textContent = text || '';
+    el.style.color = good ? 'var(--accent)' : 'var(--sold)';
+  }
+  function auctionErrorMessage(error){
+    return AUCTION_ERROR_TEXT[error && error.code] || (error && error.message) || 'Die Auktionsaktion konnte nicht ausgeführt werden.';
+  }
+  function presenceSnapshotForAuction(){
+    var cutoff = Date.now() - 15*60*1000;
+    var snapshot = {};
+    Object.keys(STATE.presence || {}).forEach(function(token){
+      var p = STATE.presence[token];
+      if(p && p.name && p.teamId && p.lastSeen >= cutoff && teamById(p.teamId)){
+        snapshot[token] = {name:p.name, teamId:p.teamId, lastSeen:p.lastSeen};
+      }
+    });
+    return snapshot;
+  }
+  function runAuctionTransition(name, options, onSuccess, onFailure){
+    if(!stateRef || !firebaseConnected){
+      setAuctionMessage('Live-Auktionen benötigen eine aktive Firebase-Verbindung.');
+      if(onFailure) onFailure({code:'OFFLINE'});
+      return;
+    }
+    if(auctionBusy) return;
+    auctionBusy = true;
+    setAuctionMessage('');
+    var transitionError = null;
+    var transitionOptions = {};
+    options = options || {};
+    Object.keys(options).forEach(function(k){ if(k!=='presenceSnapshot') transitionOptions[k]=options[k]; });
+    stateRef.transaction(function(remoteCore){
+      if(!remoteCore){ transitionError = new Error('Der gemeinsame Spielstand ist noch nicht verfügbar.'); return; }
+      try{
+        remoteCore.presence = options.presenceSnapshot || STATE.presence || {};
+        var next = window.TransferbrettAuction[name](remoteCore, transitionOptions);
+        delete next.presence;
+        transitionError = null;
+        return next;
+      } catch(err){ transitionError = err; return; }
+    }, function(error, committed){
+      auctionBusy = false;
+      if(error){ setAuctionMessage('Firebase-Fehler: ' + error.message); if(onFailure) onFailure(); render(); return; }
+      if(!committed){ setAuctionMessage(auctionErrorMessage(transitionError)); if(onFailure) onFailure(transitionError); render(); return; }
+      setSave('ok', 'Auktion live synchronisiert');
+      if(onSuccess) onSuccess();
+      render();
+    }, false);
   }
 
   function doExport(onDone){
@@ -879,12 +1097,13 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   document.getElementById('exportBtn').addEventListener('click', function(){ doExport(); });
 
   document.getElementById('importBtn').addEventListener('click', function(){
+    if(normalChangesLocked()) return;
     document.getElementById('importFile').click();
   });
   document.getElementById('importFile').addEventListener('change', function(ev){
     var file = ev.target.files && ev.target.files[0];
     if(!file) return;
-    if(!isAdmin()){ ev.target.value=''; return; }
+    if(!isAdmin() || normalChangesLocked()){ ev.target.value=''; return; }
     var reader = new FileReader();
     reader.onload = function(){
       try{
@@ -926,6 +1145,14 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   function teamRemaining(teamId){ var t = teamById(teamId); return t ? t.balance : 0; }
   function teamById(id){ return STATE.teams.filter(function(t){return t.id===id;})[0]; }
   function purchasedIds(){ return Object.keys(STATE.purchases); }
+  function auctionActive(){ return !!(STATE.auction && STATE.auction.active); }
+  function auctionLotActive(){ return !!(auctionActive() && STATE.auction.lot); }
+  function auctionParticipant(token){
+    if(!auctionActive()) return null;
+    return STATE.auction.participants.filter(function(p){ return p.token===token; })[0] || null;
+  }
+  function currentNominator(){ return auctionParticipant(STATE.auction && STATE.auction.currentNominatorToken); }
+  function normalChangesLocked(){ return auctionActive(); }
 
   // ---- filter dropdown population ----
   var posSel = document.getElementById('posFilter');
@@ -985,7 +1212,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   // ---------- Buy modal ----------
   function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
 
-  function openConfirmModal(message, onConfirm){
+  function openConfirmModal(message, onConfirm, confirmLabel){
     var root = document.getElementById('modalRoot');
     var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
     backdrop.addEventListener('click', function(ev){ if(ev.target===backdrop) closeModal(); });
@@ -995,7 +1222,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var actions = document.createElement('div'); actions.className='modal-actions';
     var cancelBtn = document.createElement('button'); cancelBtn.className='btn small'; cancelBtn.textContent='Abbrechen';
     cancelBtn.addEventListener('click', closeModal);
-    var okBtn = document.createElement('button'); okBtn.className='btn small primary'; okBtn.textContent='Entfernen';
+    var okBtn = document.createElement('button'); okBtn.className='btn small primary'; okBtn.textContent=confirmLabel || 'Entfernen';
     okBtn.addEventListener('click', function(){ closeModal(); onConfirm(); });
     actions.appendChild(cancelBtn); actions.appendChild(okBtn);
     modal.appendChild(h); modal.appendChild(sub); modal.appendChild(actions);
@@ -1003,6 +1230,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   }
 
   function openResetModal(){
+    if(normalChangesLocked()) return;
     var root = document.getElementById('modalRoot');
     var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
     backdrop.addEventListener('click', function(ev){ if(ev.target===backdrop) closeModal(); });
@@ -1046,12 +1274,12 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     backdrop.appendChild(modal); root.appendChild(backdrop);
   }
 
-  function openInfoModal(message){
+  function openInfoModal(message, title){
     var root = document.getElementById('modalRoot');
     var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
     backdrop.addEventListener('click', function(ev){ if(ev.target===backdrop) closeModal(); });
     var modal = document.createElement('div'); modal.className='modal';
-    var h = document.createElement('h3'); h.textContent = 'Kauf abgeschlossen';
+    var h = document.createElement('h3'); h.textContent = title || 'Kauf abgeschlossen';
     var sub = document.createElement('div'); sub.className='modal-sub'; sub.textContent = message;
     var actions = document.createElement('div'); actions.className='modal-actions';
     var okBtn = document.createElement('button'); okBtn.className='btn small primary'; okBtn.textContent='OK';
@@ -1062,6 +1290,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   }
 
   function openBuyModal(playerId, presetTeamId){
+    if(normalChangesLocked()) return;
     var p = PBY[playerId];
     var root = document.getElementById('modalRoot');
     var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
@@ -1127,7 +1356,130 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     priceInp.focus(); priceInp.select();
   }
 
+  // ---------- Live auction ----------
+  function openAuctionStartModal(){
+    if(!isAdmin() || auctionActive()) return;
+    if(!stateRef || !firebaseConnected){ openInfoModal('Live-Auktionen benötigen eine aktive Firebase-Verbindung.', 'Auktion nicht verfügbar'); return; }
+    var presenceSnapshot = presenceSnapshotForAuction();
+    var tokens = Object.keys(presenceSnapshot);
+    if(tokens.length===0){
+      openInfoModal('Vor dem Start muss sich mindestens eine anwesende Person einem Team zuordnen.', 'Noch keine Teilnehmer');
+      return;
+    }
+
+    var root = document.getElementById('modalRoot');
+    var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
+    backdrop.addEventListener('click', function(ev){ if(ev.target===backdrop) closeModal(); });
+    var modal = document.createElement('div'); modal.className='modal';
+    var h = document.createElement('h3'); h.textContent='Live-Auktion starten';
+    var sub = document.createElement('div'); sub.className='modal-sub';
+    sub.textContent = tokens.length + ' anwesende Person' + (tokens.length===1?'':'en') + ' mit Team werden übernommen.';
+
+    var budgetLbl = document.createElement('label'); budgetLbl.textContent='Gemeinsames Startbudget (Mio €)';
+    var budgetInp = document.createElement('input'); budgetInp.type='number'; budgetInp.min='0'; budgetInp.step='0.1';
+    budgetInp.id='auctionStartBudget'; budgetLbl.htmlFor=budgetInp.id;
+    budgetInp.value = STATE.teams.length ? STATE.teams[0].budget : 100;
+    var hasPurchases = purchasedIds().length>0;
+    if(hasPurchases){ budgetInp.disabled=true; }
+    var budgetHint = document.createElement('div'); budgetHint.className='budget-hint';
+    budgetHint.textContent = hasPurchases
+      ? 'Es gibt bereits Käufe. Die vorhandenen Budgets und Kontostände bleiben deshalb unverändert.'
+      : 'Dieses Budget wird für alle teilnehmenden Teams gesetzt.';
+
+    var stepLbl = document.createElement('label'); stepLbl.textContent='Fester Gebotsschritt (Mio €)';
+    var stepInp = document.createElement('input'); stepInp.type='number'; stepInp.min='0.1'; stepInp.step='0.1'; stepInp.value='0.1';
+    stepInp.id='auctionBidIncrement'; stepLbl.htmlFor=stepInp.id;
+
+    var starterLbl = document.createElement('label'); starterLbl.textContent='Erste nominierende Person';
+    var starterSel = document.createElement('select');
+    starterSel.id='auctionStartNominator'; starterLbl.htmlFor=starterSel.id;
+    var randomOpt = document.createElement('option'); randomOpt.value=''; randomOpt.textContent='Zufällig bestimmen'; starterSel.appendChild(randomOpt);
+    tokens.forEach(function(token){
+      var entry = presenceSnapshot[token];
+      var team = teamById(entry.teamId);
+      var o = document.createElement('option'); o.value=token; o.textContent=entry.name + ' · ' + (team ? team.name : '?'); starterSel.appendChild(o);
+    });
+
+    var startError = document.createElement('div'); startError.className='budget-hint err'; startError.style.minHeight='18px';
+    var actions = document.createElement('div'); actions.className='modal-actions';
+    var cancelBtn = document.createElement('button'); cancelBtn.className='btn small'; cancelBtn.textContent='Abbrechen'; cancelBtn.addEventListener('click', closeModal);
+    var startBtn = document.createElement('button'); startBtn.className='btn small primary'; startBtn.textContent='Auktion starten';
+    startBtn.addEventListener('click', function(){
+      var budget = parseFloat(budgetInp.value), increment = parseFloat(stepInp.value);
+      if(isNaN(budget) || budget<0 || Math.abs(budget*10-Math.round(budget*10))>0.000001){ startError.textContent='Das Startbudget muss in Schritten von 0,1 Mio. € angegeben werden.'; return; }
+      if(isNaN(increment) || increment<=0 || Math.abs(increment*10-Math.round(increment*10))>0.000001){ startError.textContent='Der Gebotsschritt muss mindestens 0,1 Mio. € betragen und eine Nachkommastelle verwenden.'; return; }
+      var currentPresenceSnapshot = presenceSnapshotForAuction();
+      var currentTokens = Object.keys(currentPresenceSnapshot);
+      if(currentTokens.length===0){ startError.textContent='Aktuell ist keine Person mit zugeordnetem Team anwesend.'; return; }
+      startError.textContent='';
+      var selectedStarter = starterSel.value;
+      var startToken = selectedStarter && currentPresenceSnapshot[selectedStarter]
+        ? selectedStarter
+        : currentTokens[Math.floor(Math.random()*currentTokens.length)];
+      startBtn.disabled=true;
+      runAuctionTransition('startSession', {
+        actorToken:myToken, startBudget:budget, startNominatorToken:startToken, bidIncrement:increment,
+        now:Date.now(), presenceSnapshot:currentPresenceSnapshot
+      }, function(){ closeModal(); setAuctionMessage('Die Live-Auktion wurde gestartet.', true); }, function(){ startBtn.disabled=false; });
+    });
+    actions.appendChild(cancelBtn); actions.appendChild(startBtn);
+    modal.appendChild(h); modal.appendChild(sub);
+    modal.appendChild(budgetLbl); modal.appendChild(budgetInp); modal.appendChild(budgetHint);
+    modal.appendChild(stepLbl); modal.appendChild(stepInp);
+    modal.appendChild(starterLbl); modal.appendChild(starterSel); modal.appendChild(startError); modal.appendChild(actions);
+    backdrop.appendChild(modal); root.appendChild(backdrop);
+  }
+
+  function nominateAuctionPlayer(playerId){
+    if(!auctionActive() || auctionLotActive() || STATE.auction.currentNominatorToken!==myToken) return;
+    var p = PBY[playerId];
+    if(!p || STATE.purchases[playerId]) return;
+    runAuctionTransition('nominatePlayer', {
+      token:myToken,
+      player:{id:p.id, name:p.n, value:p.v},
+      startPrice:Math.round((p.v/1000000)*10)/10,
+      lotId:'lot-' + Date.now() + '-' + Math.random().toString(36).slice(2,8),
+      now:Date.now()
+    });
+  }
+
+  function placeAuctionBid(){
+    if(!auctionLotActive()) return;
+    var participant = auctionParticipant(myToken);
+    if(!participant) return;
+    var lot = STATE.auction.lot;
+    var amount = lot.highestBid===null ? lot.startPrice : Math.round((lot.highestBid + STATE.auction.bidIncrement)*1000000)/1000000;
+    runAuctionTransition('placeBid', {
+      token:myToken, teamId:participant.teamId, amount:amount,
+      expectedCurrentBid:lot.highestBid, now:Date.now()
+    });
+  }
+
+  function finalizeAuctionLot(){
+    if(!isAdmin() || !auctionLotActive()) return;
+    runAuctionTransition('finalizeLot', {actorToken:myToken, expectedLotId:STATE.auction.lot.id, now:Date.now()}, function(){
+      setAuctionMessage('Zuschlag erteilt. Die nächste Person ist mit der Nominierung dran.', true);
+    });
+  }
+  function cancelAuctionLot(){
+    if(!isAdmin() || !auctionLotActive()) return;
+    runAuctionTransition('cancelLot', {actorToken:myToken, expectedLotId:STATE.auction.lot.id, now:Date.now()}, function(){
+      setAuctionMessage('Die Runde wurde abgebrochen. Die nominierende Person darf erneut wählen.', true);
+    });
+  }
+  function skipAuctionNominator(){
+    if(!isAdmin() || !auctionActive() || auctionLotActive()) return;
+    runAuctionTransition('skipNominator', {actorToken:myToken, now:Date.now()});
+  }
+  function endAuctionSession(){
+    if(!isAdmin() || !auctionActive() || auctionLotActive()) return;
+    openConfirmModal('Die Live-Auktion wird beendet. Käufe und Budgets bleiben erhalten.', function(){
+      runAuctionTransition('endSession', {actorToken:myToken, now:Date.now()});
+    }, 'Auktion beenden');
+  }
+
   function openReassignModal(playerId){
+    if(normalChangesLocked()) return;
     var p = PBY[playerId];
     var current = STATE.purchases[playerId];
     if(!p || !current) return;
@@ -1211,6 +1563,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   }
 
   function openPlayerEditModal(playerId){
+    if(normalChangesLocked()) return;
     var p = PBY[playerId];
     if(!p) return;
     var isCustom = !!p.custom;
@@ -1288,6 +1641,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   }
 
   function openAddPlayerModal(){
+    if(normalChangesLocked()) return;
     var root = document.getElementById('modalRoot');
     var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
     backdrop.addEventListener('click', function(ev){ if(ev.target===backdrop) closeModal(); });
@@ -1346,6 +1700,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
   // Buying from the pool: only the buyer's balance moves.
   function recordPurchase(playerId, teamId, price){
+    if(normalChangesLocked()) return;
     var t = teamById(teamId);
     if(t) t.balance -= price;
     STATE.purchases[playerId] = {teamId: teamId, price: price};
@@ -1373,7 +1728,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   // Undo reverses only the CURRENT holding: the team that currently owns the player gets back
   // exactly what they most recently paid for it, and the player returns to the pool.
   function undoPurchase(playerId){
-    if(!isAdmin()) return;
+    if(!isAdmin() || normalChangesLocked()) return;
     var current = STATE.purchases[playerId];
     if(current){
       var t = teamById(current.teamId);
@@ -1385,7 +1740,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   }
 
   function undoLastSale(){
-    if(!isAdmin()) return;
+    if(!isAdmin() || normalChangesLocked()) return;
     for(var i=STATE.history.length-1;i>=0;i--){
       if(!STATE.history[i].undone){ undoPurchase(STATE.history[i].playerId); return; }
     }
@@ -1395,7 +1750,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   // price (so a profitable sale can push them above their start budget), and the buying team
   // pays that price. Reassigning within the SAME team is just a price correction.
   function reassignPurchase(playerId, newTeamId, newPrice){
-    if(!isAdmin()) return;
+    if(!isAdmin() || normalChangesLocked()) return;
     var current = STATE.purchases[playerId];
     if(!current) return;
     var oldTeamId = current.teamId, oldPrice = current.price;
@@ -1431,7 +1786,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
     var tdChk = document.createElement('td');
     var chk = document.createElement('input'); chk.type='checkbox'; chk.checked = selected.has(p.id);
-    chk.disabled = !!purchase || !isAdmin();
+    chk.disabled = !!purchase || !isAdmin() || normalChangesLocked();
     chk.addEventListener('change', function(){
       if(chk.checked) selected.add(p.id); else selected.delete(p.id);
       updateBulkBar();
@@ -1472,16 +1827,25 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var tdAct = document.createElement('td');
     var actWrap = document.createElement('div'); actWrap.className='row-actions';
     var editBtn = document.createElement('button'); editBtn.className='btn small'; editBtn.textContent='Bearbeiten';
-    editBtn.disabled = !isAdmin();
+    editBtn.disabled = !isAdmin() || normalChangesLocked();
     if(!isAdmin()) editBtn.title='Nur der aktive Admin kann Spieler bearbeiten';
+    else if(normalChangesLocked()) editBtn.title='Während der Live-Auktion gesperrt';
     editBtn.addEventListener('click', function(){ openPlayerEditModal(p.id); });
     actWrap.appendChild(editBtn);
     if(purchase){
       var undoBtn = document.createElement('button'); undoBtn.className='btn small danger'; undoBtn.textContent='Rückgängig';
-      undoBtn.disabled = !isAdmin();
+      undoBtn.disabled = !isAdmin() || normalChangesLocked();
       if(!isAdmin()) undoBtn.title='Nur der aktive Admin kann das ändern';
+      else if(normalChangesLocked()) undoBtn.title='Während der Live-Auktion gesperrt';
       undoBtn.addEventListener('click', function(){ undoPurchase(p.id); });
       actWrap.appendChild(undoBtn);
+    } else if(auctionActive()){
+      if(!auctionLotActive() && STATE.auction.currentNominatorToken===myToken){
+        var nominateBtn = document.createElement('button'); nominateBtn.className='btn small primary'; nominateBtn.textContent='Auflegen';
+        nominateBtn.disabled = auctionBusy || !stateRef || !firebaseConnected;
+        nominateBtn.addEventListener('click', function(){ nominateAuctionPlayer(p.id); });
+        actWrap.appendChild(nominateBtn);
+      }
     } else {
       var buyBtn = document.createElement('button'); buyBtn.className='btn small primary'; buyBtn.textContent='Kaufen';
       buyBtn.disabled = !isAdmin();
@@ -1494,11 +1858,14 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     tr.appendChild(tdChk); tr.appendChild(tdDrag); tr.appendChild(tdName); tr.appendChild(tdPos);
     tr.appendChild(tdVal); tr.appendChild(tdPt); tr.appendChild(tdNo); tr.appendChild(tdAct);
 
-    if(!isAdmin()){ tdDrag.style.visibility='hidden'; }
+    var canDragNormally = isAdmin() && !auctionActive();
+    var canNominate = auctionActive() && !auctionLotActive() && STATE.auction.currentNominatorToken===myToken && !!stateRef && firebaseConnected;
+    if(!canDragNormally && !canNominate){ tdDrag.style.visibility='hidden'; }
     tr.addEventListener('dragstart', function(ev){
-      if(purchase || !isAdmin()){ ev.preventDefault(); return; }
+      if(purchase || (!canDragNormally && !canNominate)){ ev.preventDefault(); return; }
       tr.classList.add('is-dragging');
       ev.dataTransfer.setData('text/plain', p.id);
+      ev.dataTransfer.setData('application/x-transferbrett-player', p.id);
       ev.dataTransfer.effectAllowed = 'copy';
     });
     tr.addEventListener('dragend', function(){ tr.classList.remove('is-dragging'); });
@@ -1512,12 +1879,12 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
     var nameRow = document.createElement('div'); nameRow.style.display='flex'; nameRow.style.alignItems='center'; nameRow.style.gap='4px';
     var nameInp = document.createElement('input'); nameInp.className='team-name-input'; nameInp.value=team.name; nameInp.style.flex='1';
-    nameInp.disabled = !amAdmin;
+    nameInp.disabled = !amAdmin || normalChangesLocked();
     nameInp.addEventListener('change', function(){
       team.name = nameInp.value.trim() || team.name; render(); persist();
     });
     var removeBtn = document.createElement('button'); removeBtn.className='roster-x'; removeBtn.textContent='✕'; removeBtn.title='Team entfernen';
-    removeBtn.disabled = !amAdmin;
+    removeBtn.disabled = !amAdmin || normalChangesLocked();
     if(!amAdmin) removeBtn.style.visibility='hidden';
     removeBtn.addEventListener('click', function(){
       var count = purchasedIds().filter(function(pid){ return STATE.purchases[pid].teamId===team.id; }).length;
@@ -1548,7 +1915,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       formSel.appendChild(o);
     });
     formSel.value = team.formation || '';
-    formSel.disabled = !amAdmin;
+    formSel.disabled = !amAdmin || normalChangesLocked();
     formSel.addEventListener('change', function(){
       team.formation = formSel.value || null; render(); persist();
     });
@@ -1565,6 +1932,8 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       adminBtn.addEventListener('click', function(){ STATE.adminToken = myToken; render(); persist(); });
     }
     adminBtn.style.width='100%'; adminBtn.style.marginTop='-2px';
+    adminBtn.disabled = normalChangesLocked();
+    if(normalChangesLocked()) adminBtn.title='Der Admin bleibt während der Live-Auktion festgelegt';
     card.appendChild(adminBtn);
 
     var remaining = team.balance;
@@ -1578,7 +1947,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var budgetLbl = document.createElement('span'); budgetLbl.textContent = 'Startbudget';
     var budgetInp = document.createElement('input'); budgetInp.type='number'; budgetInp.min='0'; budgetInp.step='1';
     budgetInp.value = team.budget;
-    budgetInp.disabled = !amAdmin;
+    budgetInp.disabled = !amAdmin || normalChangesLocked();
     budgetInp.style.width='64px'; budgetInp.style.padding='3px 6px'; budgetInp.style.borderRadius='6px';
     budgetInp.style.border='1px solid var(--line)'; budgetInp.style.background='var(--surface-alt)'; budgetInp.style.textAlign='right';
     budgetInp.addEventListener('change', function(){
@@ -1636,7 +2005,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         var nm = document.createElement('div'); nm.className='roster-name'; nm.textContent=p.n; nm.title=p.n;
         var pr = document.createElement('div'); pr.className='roster-price'; pr.textContent=fmtMio(pu.price);
         var x = document.createElement('button'); x.className='roster-x'; x.textContent='×'; x.title='Kauf rückgängig machen';
-        x.disabled = !amAdmin;
+        x.disabled = !amAdmin || normalChangesLocked();
         if(!amAdmin) x.style.visibility='hidden';
         x.addEventListener('click', function(){ undoPurchase(pid); });
         row.appendChild(pos); row.appendChild(nm); row.appendChild(pr); row.appendChild(x);
@@ -1648,7 +2017,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       card.appendChild(list);
     }
 
-    if(amAdmin){
+    if(amAdmin && !normalChangesLocked()){
       card.addEventListener('dragover', function(ev){ ev.preventDefault(); card.classList.add('drag-over'); });
       card.addEventListener('dragleave', function(){ card.classList.remove('drag-over'); });
       card.addEventListener('drop', function(ev){
@@ -1663,7 +2032,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
   function updateBulkBar(){
     var bar = document.getElementById('bulkBar');
-    if(selected.size>0 && isAdmin()){
+    if(selected.size>0 && isAdmin() && !normalChangesLocked()){
       bar.classList.add('show');
       document.getElementById('bulkCount').textContent = selected.size + ' ausgewählt';
     } else {
@@ -1677,7 +2046,9 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var textSpan = document.createElement('span');
     if(isAdmin()){
       el.className = 'admin-banner you';
-      textSpan.textContent = 'Du bist Admin – du kannst kaufen, Teams anlegen/bearbeiten und speichern.';
+      textSpan.textContent = auctionActive()
+        ? 'Du bist Admin der Live-Auktion – du erteilst Zuschläge, kannst Runden abbrechen und Personen überspringen.'
+        : 'Du bist Admin – du kannst kaufen, Teams anlegen/bearbeiten und speichern.';
     } else if(STATE.adminToken){
       el.className = 'admin-banner locked';
       var adminName = STATE.presence[STATE.adminToken] ? STATE.presence[STATE.adminToken].name : null;
@@ -1719,15 +2090,18 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         pill.className = 'presence-pill' + (e.tok===STATE.adminToken ? ' admin' : '');
         var nameSpan = document.createElement('span'); nameSpan.textContent = e.name + (e.tok===myToken ? ' (du)' : '') + (e.tok===STATE.adminToken ? ' · Admin' : '');
         pill.appendChild(nameSpan);
-        if(e.tok===myToken){
+        if(e.tok===myToken || isAdmin()){
           var teamSel = document.createElement('select'); teamSel.className='formation-select'; teamSel.style.marginLeft='4px';
           var noneOpt = document.createElement('option'); noneOpt.value=''; noneOpt.textContent='kein Team'; teamSel.appendChild(noneOpt);
           STATE.teams.forEach(function(t){
             var o = document.createElement('option'); o.value=t.id; o.textContent=t.name; teamSel.appendChild(o);
           });
           teamSel.value = e.teamId || '';
+          teamSel.disabled = auctionActive() || (e.tok!==myToken && (!presenceRef || !firebaseConnected));
+          if(auctionActive()) teamSel.title='Die Teamzuordnung ist während der Live-Auktion festgeschrieben';
+          else if(e.tok!==myToken && (!presenceRef || !firebaseConnected)) teamSel.title='Andere Teilnehmer können nur mit aktiver Verbindung zugeordnet werden';
           teamSel.addEventListener('click', function(ev){ ev.stopPropagation(); });
-          teamSel.addEventListener('change', function(){ setMyTeam(teamSel.value); });
+          teamSel.addEventListener('change', function(){ setPresenceTeam(e.tok, teamSel.value); });
           pill.appendChild(teamSel);
         } else if(e.teamId){
           var teamName = STATE.teams.filter(function(t){return t.id===e.teamId;}).map(function(t){return t.name;})[0];
@@ -1749,6 +2123,105 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       joinWrap.appendChild(joinInp); joinWrap.appendChild(joinBtn);
       row.appendChild(joinWrap);
     }
+  }
+
+  function renderAuction(){
+    var active = auctionActive();
+    var status = document.getElementById('auctionStatus');
+    var statusText = document.getElementById('auctionStatusText');
+    var startBtn = document.getElementById('startAuctionBtn');
+    var content = document.getElementById('auctionSessionContent');
+    var dropZone = document.getElementById('auctionDropZone');
+    var lotContent = document.getElementById('auctionLotContent');
+    var meta = document.getElementById('auctionSessionMeta');
+    var bidBtn = document.getElementById('auctionBidBtn');
+    var bidInfo = document.getElementById('auctionBidInfo');
+    var adminActions = document.getElementById('auctionAdminActions');
+    var skipBtn = document.getElementById('auctionSkipBtn');
+    var cancelBtn = document.getElementById('auctionCancelBtn');
+    var finalizeBtn = document.getElementById('auctionFinalizeBtn');
+    var endBtn = document.getElementById('auctionEndBtn');
+    var offline = document.getElementById('auctionOffline');
+
+    startBtn.style.display = (!active && isAdmin()) ? '' : 'none';
+    startBtn.disabled = !stateRef || !firebaseConnected;
+    content.style.display = active ? '' : 'none';
+    status.className = 'auction-status' + (active ? ' live' : '');
+    statusText.textContent = active ? 'Live · ' + STATE.auction.participants.length + ' Teilnehmer' : 'Noch nicht gestartet';
+    if(!active) return;
+
+    offline.style.display = (stateRef && firebaseConnected) ? 'none' : '';
+    meta.innerHTML = '';
+    STATE.auction.participants.forEach(function(participant){
+      var team = teamById(participant.teamId);
+      var pill = document.createElement('span');
+      pill.className = 'auction-person' + (participant.token===STATE.auction.currentNominatorToken ? ' current' : '');
+      pill.textContent = participant.name + ' · ' + (team ? team.name : '?') + (participant.token===STATE.auction.currentNominatorToken ? ' · nominiert' : '');
+      meta.appendChild(pill);
+    });
+    var stepPill = document.createElement('span'); stepPill.className='auction-person'; stepPill.textContent='Gebotsschritt: ' + fmtMio(STATE.auction.bidIncrement); meta.appendChild(stepPill);
+
+    var lot = STATE.auction.lot;
+    var nominator = currentNominator();
+    var amNominator = !!nominator && nominator.token===myToken;
+    dropZone.className = 'auction-drop-zone' + (!lot && amNominator ? ' ready' : '');
+    lotContent.innerHTML = '';
+    adminActions.style.display = isAdmin() ? '' : 'none';
+    skipBtn.style.display = lot ? 'none' : '';
+    endBtn.style.display = lot ? 'none' : '';
+    cancelBtn.style.display = lot ? '' : 'none';
+    finalizeBtn.style.display = lot ? '' : 'none';
+    bidBtn.style.display = 'none';
+    bidInfo.textContent = '';
+
+    if(!lot){
+      var empty = document.createElement('div');
+      var title = document.createElement('div'); title.className='auction-empty-title';
+      title.textContent = amNominator ? 'Du bist dran!' : ((nominator ? nominator.name : 'Die nächste Person') + ' nominiert den nächsten Spieler');
+      var sub = document.createElement('div'); sub.className='auction-empty-sub';
+      sub.textContent = amNominator
+        ? 'Ziehe einen unvergebenen Spieler aus der Liste auf diesen Auktionsplatz. Auf Mobilgeräten kannst du „Auflegen“ verwenden.'
+        : 'Sobald ein Spieler auf dem Platz liegt, können alle Auktionsteilnehmer bieten.';
+      empty.appendChild(title); empty.appendChild(sub); lotContent.appendChild(empty);
+      return;
+    }
+
+    var p = PBY[lot.playerId];
+    var leaderTeam = lot.highestTeamId ? teamById(lot.highestTeamId) : null;
+    var lotWrap = document.createElement('div'); lotWrap.className='auction-lot';
+    var playerSide = document.createElement('div');
+    var playerName = document.createElement('div'); playerName.className='auction-player-name'; playerName.textContent=lot.playerName;
+    var playerMeta = document.createElement('div'); playerMeta.className='auction-player-meta';
+    playerMeta.textContent = p ? (p.c + ' · ' + POS_LABEL[p.p] + ' · Marktwert ' + fmtEUR(p.v)) : 'Live-Auktion';
+    playerSide.appendChild(playerName); playerSide.appendChild(playerMeta);
+    var priceSide = document.createElement('div'); priceSide.className='auction-price';
+    var priceLabel = document.createElement('div'); priceLabel.className='auction-price-label'; priceLabel.textContent=lot.highestBid===null ? 'Startpreis' : 'Höchstgebot';
+    var priceValue = document.createElement('div'); priceValue.className='auction-price-value'; priceValue.textContent=fmtMio(lot.highestBid===null ? lot.startPrice : lot.highestBid);
+    var leader = document.createElement('div'); leader.className='auction-leader';
+    leader.textContent = leaderTeam ? (leaderTeam.name + ' führt · ' + (lot.bidCount||0) + ' Gebote') : 'Noch kein Gebot';
+    priceSide.appendChild(priceLabel); priceSide.appendChild(priceValue); priceSide.appendChild(leader);
+    lotWrap.appendChild(playerSide); lotWrap.appendChild(priceSide); lotContent.appendChild(lotWrap);
+
+    var participant = auctionParticipant(myToken);
+    if(participant){
+      var participantTeam = teamById(participant.teamId);
+      var nextAmount = lot.highestBid===null ? lot.startPrice : Math.round((lot.highestBid + STATE.auction.bidIncrement)*1000000)/1000000;
+      var remaining = participantTeam ? participantTeam.balance : 0;
+      var ownTeamLeads = lot.highestTeamId===participant.teamId;
+      bidBtn.style.display = '';
+      bidBtn.textContent = fmtMio(nextAmount) + ' bieten';
+      bidBtn.disabled = auctionBusy || !stateRef || !firebaseConnected || ownTeamLeads || nextAmount>remaining;
+      if(ownTeamLeads) bidInfo.textContent = (participantTeam ? participantTeam.name : 'Dein Team') + ' führt bereits.';
+      else if(nextAmount>remaining) bidInfo.textContent = 'Nicht genug Budget: verfügbar ' + fmtMio(remaining) + '.';
+      else bidInfo.textContent = 'Für ' + (participantTeam ? participantTeam.name : 'dein Team') + ' · danach verbleiben ' + fmtMio(remaining-nextAmount) + '.';
+    } else {
+      bidInfo.textContent = 'Dieser Browser war beim Auktionsstart keinem teilnehmenden Team zugeordnet.';
+    }
+    var auctionUnavailable = auctionBusy || !stateRef || !firebaseConnected;
+    finalizeBtn.disabled = auctionUnavailable || !lot.highestTeamId;
+    cancelBtn.disabled = auctionUnavailable;
+    skipBtn.disabled = auctionUnavailable;
+    endBtn.disabled = auctionUnavailable;
   }
 
   function fmtTime(ts){
@@ -1840,9 +2313,10 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     applyView();
     renderAdminBanner();
     renderPresence();
+    renderAuction();
     updateSortHeaders();
     var amAdminNow = isAdmin();
-    renderHistory(amAdminNow);
+    renderHistory(amAdminNow && !normalChangesLocked());
 
     // teams grid
     var grid = document.getElementById('teamsGrid');
@@ -1850,10 +2324,10 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var gfrag = document.createDocumentFragment();
     STATE.teams.forEach(function(t){ gfrag.appendChild(renderTeamCard(t)); });
     grid.appendChild(gfrag);
-    document.getElementById('addTeamBtn').disabled = !amAdminNow;
+    document.getElementById('addTeamBtn').disabled = !amAdminNow || normalChangesLocked();
     document.getElementById('addTeamBtn').style.visibility = amAdminNow ? '' : 'hidden';
-    document.getElementById('resetBtn').style.display = amAdminNow ? '' : 'none';
-    document.getElementById('addPlayerBtn').style.display = amAdminNow ? '' : 'none';
+    document.getElementById('resetBtn').style.display = (amAdminNow && !normalChangesLocked()) ? '' : 'none';
+    document.getElementById('addPlayerBtn').style.display = (amAdminNow && !normalChangesLocked()) ? '' : 'none';
 
     // bulk team select
     var bts = document.getElementById('bulkTeamSelect');
@@ -1863,8 +2337,8 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     });
 
     // import restricted to admin (overwrites shared state for everyone)
-    document.getElementById('importBtn').disabled = !amAdminNow;
-    document.getElementById('importBtn').title = amAdminNow ? '' : 'Nur der aktive Admin kann einen Stand importieren';
+    document.getElementById('importBtn').disabled = !amAdminNow || normalChangesLocked();
+    document.getElementById('importBtn').title = normalChangesLocked() ? 'Während der Live-Auktion gesperrt' : (amAdminNow ? '' : 'Nur der aktive Admin kann einen Stand importieren');
 
     // table
     var list = filteredPlayers();
@@ -1875,11 +2349,29 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     tbody.appendChild(frag);
     document.getElementById('resultCount').textContent = list.length + ' / ' + PLAYERS.length + ' Spieler · ' + purchasedIds().length + ' vergeben';
 
-    document.getElementById('selectAll').disabled = !amAdminNow;
+    document.getElementById('selectAll').disabled = !amAdminNow || normalChangesLocked();
     updateBulkBar();
   }
 
   // ---- events ----
+  document.getElementById('startAuctionBtn').addEventListener('click', openAuctionStartModal);
+  document.getElementById('auctionBidBtn').addEventListener('click', placeAuctionBid);
+  document.getElementById('auctionFinalizeBtn').addEventListener('click', finalizeAuctionLot);
+  document.getElementById('auctionCancelBtn').addEventListener('click', cancelAuctionLot);
+  document.getElementById('auctionSkipBtn').addEventListener('click', skipAuctionNominator);
+  document.getElementById('auctionEndBtn').addEventListener('click', endAuctionSession);
+  var auctionDropZone = document.getElementById('auctionDropZone');
+  auctionDropZone.addEventListener('dragover', function(ev){
+    if(auctionActive() && !auctionLotActive() && STATE.auction.currentNominatorToken===myToken && stateRef && firebaseConnected){
+      ev.preventDefault(); auctionDropZone.classList.add('drag-over');
+    }
+  });
+  auctionDropZone.addEventListener('dragleave', function(){ auctionDropZone.classList.remove('drag-over'); });
+  auctionDropZone.addEventListener('drop', function(ev){
+    ev.preventDefault(); auctionDropZone.classList.remove('drag-over');
+    var playerId = ev.dataTransfer.getData('application/x-transferbrett-player') || ev.dataTransfer.getData('text/plain');
+    if(playerId) nominateAuctionPlayer(playerId);
+  });
   document.getElementById('searchInput').addEventListener('input', render);
   ['posFilter','clubFilter','sortSelect'].forEach(function(id){
     document.getElementById(id).addEventListener('change', render);
@@ -1933,7 +2425,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   });
 
   document.getElementById('addTeamBtn').addEventListener('click', function(){
-    if(!isAdmin()) return;
+    if(!isAdmin() || normalChangesLocked()) return;
     teamSeq += 1;
     var id = 'team' + teamSeq + '_' + Math.random().toString(36).slice(2,7);
     STATE.teams.push({id:id, name:'Team ' + teamSeq, budget:100, balance:100, formation:null});
@@ -1948,7 +2440,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   });
 
   document.getElementById('bulkAddBtn').addEventListener('click', function(){
-    if(!isAdmin()) return;
+    if(!isAdmin() || normalChangesLocked()) return;
     var teamId = document.getElementById('bulkTeamSelect').value;
     var ids = Array.from(selected);
     var rem = teamRemaining(teamId);
