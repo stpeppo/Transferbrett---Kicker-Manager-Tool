@@ -127,6 +127,7 @@ test('only the snapshotted current nominator can place an unsold player on the l
     highestBid: null,
     highestTeamId: null,
     bidCount: 0,
+    bids: [],
     nominatedByToken: 'alice',
     nominatedAt: 2_100,
   });
@@ -155,6 +156,22 @@ test('valid bids may exceed the current minimum and retain the winning browser a
   assert.equal(state.auction.lot.highestBid, 12);
   assert.equal(state.auction.lot.highestTeamId, 'team-a');
   assert.equal(state.auction.lot.bidCount, 2);
+  assert.deepEqual(state.auction.lot.bids, [
+    { token: 'bob', bidderName: 'Bob', teamId: 'team-b', amount: 10, at: 2_200 },
+    { token: 'alice', bidderName: 'Alice', teamId: 'team-a', amount: 12, at: 2_201 },
+  ]);
+});
+
+test('bid history is restored for an older lot that did not yet contain a bids array', () => {
+  const olderLot = activeLot();
+  delete olderLot.auction.lot.bids;
+  const next = placeBid(olderLot, {
+    token: 'bob', teamId: 'team-b', amount: 10, expectedCurrentBid: null, now: 2_200,
+  });
+
+  assert.deepEqual(next.auction.lot.bids, [
+    { token: 'bob', bidderName: 'Bob', teamId: 'team-b', amount: 10, at: 2_200 },
+  ]);
 });
 
 test('a Firebase lot with omitted null bid fields starts bidding at the market value', () => {

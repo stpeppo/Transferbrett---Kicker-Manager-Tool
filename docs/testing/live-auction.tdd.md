@@ -13,8 +13,8 @@ The journeys were derived from the approved conversation plan; no separate plan 
 
 | Task | Test target | RED evidence | GREEN evidence |
 |---|---|---|---|
-| Auction domain transitions | `tests/auction_logic.test.js` | `node --test tests/auction_logic.test.js` failed with `Cannot find module '../auction_logic'` before production logic existed; later regression tests covered leave handling, resuming, and Firebase-omitted null bid fields. | 23 domain tests pass after `auction_logic.js`, its authorization guards, active leave/resume handling, and Firebase round-trip normalization were implemented. |
-| Build and UI integration | `tests/auction_build_integration.test.js` | Three assertions failed because the panel, controls, build placeholder, and inlined logic did not yet exist. | All fourteen integration checks pass after rebuilding `transferbrett.html`. |
+| Auction domain transitions | `tests/auction_logic.test.js` | `node --test tests/auction_logic.test.js` failed with `Cannot find module '../auction_logic'` before production logic existed; later regression tests covered leave handling, resuming, bid history, and Firebase-omitted fields. | 24 domain tests pass after `auction_logic.js`, its authorization guards, active leave/resume handling, bid history, and Firebase round-trip normalization were implemented. |
+| Build and UI integration | `tests/auction_build_integration.test.js` | Three assertions failed because the panel, controls, build placeholder, and inlined logic did not yet exist. | All fifteen integration checks pass after rebuilding `transferbrett.html`. |
 | Nominator skip | `tests/auction_logic.test.js` | The new test failed with `TypeError: skipNominator is not a function`. | The same test passes after the transition was added. |
 
 ## Guarantees
@@ -41,12 +41,13 @@ The journeys were derived from the approved conversation plan; no separate plan 
 | 18 | Player search, filters, legend, and bulk controls are located immediately above the player table. | Integration | PASS |
 | 19 | A fresh Firebase lot whose null bid fields were omitted starts at the player's market value without a stale-bid error. | Unit | PASS |
 | 20 | A finished auction can resume with the same participants, current nominator, budgets, and purchases. | Unit + Integration | PASS |
+| 21 | Every accepted bid is retained and rendered in an animated, reduced-motion-safe history while minimum and highest bid remain distinct. | Unit + Integration | PASS |
 
 ## Commands and coverage
 
 - Build: bundled Python `build_transferbrett.py` — PASS.
-- Tests: bundled Node `--test --experimental-test-coverage tests/auction_logic.test.js tests/auction_build_integration.test.js` — 37/37 PASS at the recorded full-suite checkpoint.
-- Domain coverage at that checkpoint: 98.31% lines, 84.30% branches, 96.97% functions.
+- Tests: bundled Node `--test --experimental-test-coverage tests/auction_logic.test.js tests/auction_build_integration.test.js` — 39/39 PASS at the recorded full-suite checkpoint.
+- Domain coverage at that checkpoint: 98.35% lines, 84.00% branches, 96.97% functions.
 - Syntax: bundled Node `--check auction_logic.js` — PASS.
 
 ## Known gaps

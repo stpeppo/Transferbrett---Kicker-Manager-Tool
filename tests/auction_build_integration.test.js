@@ -33,6 +33,16 @@ test('a finished auction exposes an admin-only resume action', () => {
   assert.match(template, /Neue Auktion starten/);
 });
 
+test('auction UI shows animated current bid and the complete bid history', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /Aktuelles Höchstgebot/);
+  assert.match(template, /Gebotsverlauf/);
+  assert.match(template, /lot\.bids/);
+  assert.match(template, /@keyframes bidPop/);
+  assert.match(template, /prefers-reduced-motion:reduce/);
+});
+
 test('auction panel is positioned directly between teams and the player table', () => {
   const template = read('transferbrett_template.html');
   const teamsIndex = template.indexOf('id="teamsGrid"');

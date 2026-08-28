@@ -140,6 +140,7 @@
       highestBid: null,
       highestTeamId: null,
       bidCount: 0,
+      bids: [],
       nominatedByToken: options.token,
       nominatedAt: options.now,
     };
@@ -178,6 +179,14 @@
     next.auction.lot.highestBidderToken = options.token;
     next.auction.lot.highestBidAt = options.now;
     next.auction.lot.bidCount = (next.auction.lot.bidCount || 0) + 1;
+    if (!Array.isArray(next.auction.lot.bids)) next.auction.lot.bids = [];
+    next.auction.lot.bids.push({
+      token: options.token,
+      bidderName: participant.name || '?',
+      teamId: options.teamId,
+      amount: money(options.amount),
+      at: options.now,
+    });
     return next;
   }
 

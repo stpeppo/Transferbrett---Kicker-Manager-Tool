@@ -82,6 +82,9 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
 - Bei einer frisch aufgelegten Runde werden von Firebase ausgelassene leere
   Gebotsfelder als "noch kein Gebot" behandelt; dadurch bleibt der Marktwert
   auch nach der Live-Synchronisierung das korrekte erste Mindestgebot.
+- Mindestgebot und aktuelles Hoechstgebot werden getrennt dargestellt. Alle
+  Gebote einer Runde erscheinen mit Person, Team, Betrag und Zeitpunkt in
+  einem animierten Gebotsverlauf; reduzierte Bewegung wird respektiert.
 - Die Adminrolle kann auch waehrend einer laufenden Auktion uebernommen oder
   freigegeben werden. Der Wechsel wird unmittelbar per Firebase-Transaktion
   an alle verbundenen Browser verteilt.
