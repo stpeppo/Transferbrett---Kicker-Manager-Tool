@@ -57,6 +57,14 @@ test('present browsers can explicitly leave the game', () => {
   assert.match(template, /presenceRef\.child\(myToken\)\.remove\(\)/);
 });
 
+test('every player row exposes a turn-gated auction nomination button', () => {
+  const template = read('transferbrett_template.html');
+
+  assert.match(template, /nominateBtn\.textContent='Zur Auktion hinzufügen'/);
+  assert.match(template, /!isCurrentNominator/);
+  assert.match(template, /Du bist aktuell nicht mit der Nominierung dran/);
+});
+
 test('auction start keeps individual budgets and includes every assigned browser', () => {
   const template = read('transferbrett_template.html');
 

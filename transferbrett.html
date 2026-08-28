@@ -2248,20 +2248,23 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     else if(normalChangesLocked()) editBtn.title='Während der Live-Auktion gesperrt';
     editBtn.addEventListener('click', function(){ openPlayerEditModal(p.id); });
     actWrap.appendChild(editBtn);
-    if(purchase){
+    if(auctionActive()){
+      var nominateBtn = document.createElement('button'); nominateBtn.className='btn small primary'; nominateBtn.textContent='Zur Auktion hinzufügen';
+      var isCurrentNominator = STATE.auction.currentNominatorToken===myToken;
+      nominateBtn.disabled = !!purchase || auctionLotActive() || !isCurrentNominator || auctionBusy || !stateRef || !firebaseConnected;
+      if(purchase) nominateBtn.title='Dieser Spieler ist bereits vergeben';
+      else if(!isCurrentNominator) nominateBtn.title='Du bist aktuell nicht mit der Nominierung dran';
+      else if(auctionLotActive()) nominateBtn.title='Zuerst muss die aktuelle Auktionsrunde abgeschlossen werden';
+      else if(!stateRef || !firebaseConnected) nominateBtn.title='Zum Hinzufügen ist eine aktive Verbindung erforderlich';
+      nominateBtn.addEventListener('click', function(){ nominateAuctionPlayer(p.id); });
+      actWrap.appendChild(nominateBtn);
+    } else if(purchase){
       var undoBtn = document.createElement('button'); undoBtn.className='btn small danger'; undoBtn.textContent='Rückgängig';
       undoBtn.disabled = !isAdmin() || normalChangesLocked();
       if(!isAdmin()) undoBtn.title='Nur der aktive Admin kann das ändern';
       else if(normalChangesLocked()) undoBtn.title='Während der Live-Auktion gesperrt';
       undoBtn.addEventListener('click', function(){ undoPurchase(p.id); });
       actWrap.appendChild(undoBtn);
-    } else if(auctionActive()){
-      if(!auctionLotActive() && STATE.auction.currentNominatorToken===myToken){
-        var nominateBtn = document.createElement('button'); nominateBtn.className='btn small primary'; nominateBtn.textContent='Auflegen';
-        nominateBtn.disabled = auctionBusy || !stateRef || !firebaseConnected;
-        nominateBtn.addEventListener('click', function(){ nominateAuctionPlayer(p.id); });
-        actWrap.appendChild(nominateBtn);
-      }
     } else {
       var buyBtn = document.createElement('button'); buyBtn.className='btn small primary'; buyBtn.textContent='Kaufen';
       buyBtn.disabled = !isAdmin();
@@ -2604,7 +2607,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       title.textContent = amNominator ? 'Du bist dran!' : ((nominator ? nominator.name : 'Die nächste Person') + ' nominiert den nächsten Spieler');
       var sub = document.createElement('div'); sub.className='auction-empty-sub';
       sub.textContent = amNominator
-        ? 'Ziehe einen unvergebenen Spieler aus der Liste auf diesen Auktionsplatz. Auf Mobilgeräten kannst du „Auflegen“ verwenden.'
+        ? 'Ziehe einen unvergebenen Spieler hierher oder nutze in der Spielerliste „Zur Auktion hinzufügen“.'
         : 'Sobald ein Spieler auf dem Platz liegt, können alle Auktionsteilnehmer bieten.';
       empty.appendChild(title); empty.appendChild(sub); lotContent.appendChild(empty);
       return;

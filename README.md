@@ -66,7 +66,8 @@ https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
   Die individuellen Teambudgets und Kontostaende bleiben erhalten. Alle
   angemeldeten Browser mit Teamzuordnung werden als Teilnehmer uebernommen. Eine ausgewaehlte oder
   zufaellige Startperson legt einen unvergebenen Spieler per Drag-and-drop
-  (mobil alternativ per "Auflegen") auf den virtuellen Auktionsplatz. Danach
+  oder ueber "Zur Auktion hinzufuegen" auf den virtuellen Auktionsplatz. Der
+  Button bleibt fuer alle sichtbar, ist aber nur fuer die Person am Zug aktiv. Danach
   koennen alle Teilnehmer ein eigenes Gebot ab dem sichtbaren Mindestgebot
   eingeben; der Marktwert ist das erste Mindestgebot. Der Admin erteilt den
   Zuschlag; Kauf, Budget und Verlauf werden in derselben Firebase-Transaktion
