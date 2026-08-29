@@ -1383,6 +1383,63 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     }, false);
   }
 
+  // Any of the three .on('value') subscriptions below can be CANCELLED by Firebase (typically on a
+  // transient permission/rules hiccup) — when that happens the callback fires once and the
+  // subscription is torn down for good. Earlier this nulled out stateRef/presenceRef permanently,
+  // so one brief blip meant that browser silently stopped syncing for the rest of the session with
+  // no way to recover short of a full reload. Every one of these now simply re-subscribes after a
+  // short delay instead, so the app heals itself once the underlying issue clears.
+  var RECONNECT_DELAY_MS = 4000;
+  function attachConnectionListener(){
+    if(!connectionRef) return;
+    connectionRef.on('value', function(snapshot){
+      firebaseConnected = snapshot.val()===true;
+      if(firebaseConnected){
+        setSave('ok', 'live verbunden');
+        if(myName) touchPresence();
+      } else {
+        setSave('err', 'Offline: Änderungen werden lokal gesichert');
+      }
+      render();
+    }, function(){
+      firebaseConnected = false;
+      setSave('err', 'Verbindung unterbrochen, versuche erneut…');
+      render();
+      setTimeout(attachConnectionListener, RECONNECT_DELAY_MS);
+    });
+  }
+  function attachStateListener(){
+    if(!stateRef) return;
+    stateRef.on('value', function(snapshot){
+      var remoteCore = snapshot.val();
+      if(remoteCore === null){
+        if(stateInitializationPending) return;
+        stateInitializationPending = true;
+        stateRef.transaction(function(currentCore){
+          return currentCore === null ? coreStateForSync() : undefined;
+        }, function(error, committed){
+          stateInitializationPending = false;
+          if(error){ setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert'); saveLocal(); return; }
+          if(committed) setSave('ok', 'neues Board angelegt');
+        }, false);
+        return;
+      }
+      applyRemoteCoreState(remoteCore);
+      setSave(firebaseConnected?'ok':'err', firebaseConnected ? 'live synchronisiert' : 'Offline: letzter Stand lokal verfügbar');
+    }, function(){
+      setSave('err', 'Verbindung unterbrochen, versuche erneut…');
+      setTimeout(attachStateListener, RECONNECT_DELAY_MS);
+    });
+  }
+  function attachPresenceListener(){
+    if(!presenceRef) return;
+    presenceRef.on('value', function(snapshot){
+      applyRemotePresence(snapshot.val());
+    }, function(){
+      setTimeout(attachPresenceListener, RECONNECT_DELAY_MS);
+    });
+  }
+
   try{
     if(window.firebase && FIREBASE_CONFIG.apiKey){
       firebase.initializeApp(FIREBASE_CONFIG);
@@ -1390,40 +1447,10 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       stateRef = boardRef.child('state');
       presenceRef = boardRef.child('presence');
       connectionRef = firebase.database().ref('.info/connected');
-      connectionRef.on('value', function(snapshot){
-        firebaseConnected = snapshot.val()===true;
-        if(firebaseConnected){
-          setSave('ok', 'live verbunden');
-          if(myName) touchPresence();
-        } else {
-          setSave('err', 'Offline: Änderungen werden lokal gesichert');
-        }
-        render();
-      }, function(){ firebaseConnected=false; setSave('err', 'Online-Verbindung fehlgeschlagen, lokal gesichert'); render(); });
       setSave('busy', 'verbinde…');
-      stateRef.on('value', function(snapshot){
-        var remoteCore = snapshot.val();
-        if(remoteCore === null){
-          if(stateInitializationPending) return;
-          stateInitializationPending = true;
-          stateRef.transaction(function(currentCore){
-            return currentCore === null ? coreStateForSync() : undefined;
-          }, function(error, committed){
-            stateInitializationPending = false;
-            if(error){ setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert'); saveLocal(); return; }
-            if(committed) setSave('ok', 'neues Board angelegt');
-          }, false);
-          return;
-        }
-        applyRemoteCoreState(remoteCore);
-        setSave(firebaseConnected?'ok':'err', firebaseConnected ? 'live synchronisiert' : 'Offline: letzter Stand lokal verfügbar');
-      }, function(){
-        stateRef = null;
-        setSave('err', 'Online-Verbindung fehlgeschlagen, lokal gesichert');
-      });
-      presenceRef.on('value', function(snapshot){
-        applyRemotePresence(snapshot.val());
-      }, function(){ /* presence sync is best-effort, ignore errors */ });
+      attachConnectionListener();
+      attachStateListener();
+      attachPresenceListener();
     } else {
       setSave('', 'Offline-Modus: wird lokal im Browser gespeichert');
     }
