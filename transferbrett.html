@@ -1344,7 +1344,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       return localCore;
     }, function(error, committed){
       if(error){
-        saveLocal(); setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert'); return;
+        saveLocal(); setSave('err', 'Online-Speichern fehlgeschlagen (' + (error && (error.code || error.message) || 'unbekannt') + '), lokal gesichert'); return;
       }
       if(!committed && blockedByAuctionRevision){
         setSave('err', 'Änderung verworfen: der Auktionsstand war bereits neuer'); return;
@@ -1419,7 +1419,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
           return currentCore === null ? coreStateForSync() : undefined;
         }, function(error, committed){
           stateInitializationPending = false;
-          if(error){ setSave('err', 'Online-Speichern fehlgeschlagen, lokal gesichert'); saveLocal(); return; }
+          if(error){ setSave('err', 'Board anlegen fehlgeschlagen (' + (error && (error.code || error.message) || 'unbekannt') + '), lokal gesichert'); saveLocal(); return; }
           if(committed) setSave('ok', 'neues Board angelegt');
         }, false);
         return;
