@@ -1316,8 +1316,16 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
   function persist(){
     touchPresence();
-    // Auction state is changed exclusively through Firebase transactions. A normal whole-state
-    // write during a live session could otherwise overwrite a bid that arrived milliseconds ago.
+    // Auction state is changed exclusively through the transactional runAuctionTransition(), which
+    // correctly recomputes its result from the fresh server value on every retry. This persist()
+    // path used to ALSO wrap its write in a stateRef.transaction() — but its update function just
+    // returned a snapshot captured once, outside the transaction, ignoring the fresh value Firebase
+    // handed it on every retry. That can never converge under real write traffic: Firebase kept
+    // (correctly) detecting the base had moved and retrying, the callback kept returning the exact
+    // same stale answer, and the transaction eventually exhausted its retries (error.code
+    // 'maxretry') without ever committing -- observed live, reproducibly, even with a single active
+    // user. A plain set() has no such precondition; it always succeeds and simply publishes the
+    // current local state, matching the original (pre-transaction) and still-correct design here.
     if(STATE.auction && STATE.auction.active){
       saveLocal();
       setSave(firebaseConnected?'ok':'err', firebaseConnected ? 'Auktion live synchronisiert' : 'Live-Auktion offline');
@@ -1329,28 +1337,11 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       return;
     }
     setSave('busy', 'speichere…');
-    var localCore = coreStateForSync();
-    var blockedByAuctionRevision = false;
-    stateRef.transaction(function(remoteCore){
-      if(remoteCore && remoteCore.auction){
-        var remoteAuction = remoteCore.auction;
-        var localAuction = localCore.auction;
-        if(remoteAuction.active || !localAuction || remoteAuction.startedAt!==localAuction.startedAt || remoteAuction.endedAt!==localAuction.endedAt){
-          blockedByAuctionRevision = true;
-          return;
-        }
-      }
-      blockedByAuctionRevision = false;
-      return localCore;
-    }, function(error, committed){
-      if(error){
-        saveLocal(); setSave('err', 'Online-Speichern fehlgeschlagen (' + (error && (error.code || error.message) || 'unbekannt') + '), lokal gesichert'); return;
-      }
-      if(!committed && blockedByAuctionRevision){
-        setSave('err', 'Änderung verworfen: der Auktionsstand war bereits neuer'); return;
-      }
+    stateRef.set(coreStateForSync()).then(function(){
       saveLocal(); setSave('ok', 'live gespeichert');
-    }, false);
+    }).catch(function(error){
+      saveLocal(); setSave('err', 'Online-Speichern fehlgeschlagen (' + (error && (error.code || error.message) || 'unbekannt') + '), lokal gesichert');
+    });
   }
 
   function changeAdmin(nextToken){

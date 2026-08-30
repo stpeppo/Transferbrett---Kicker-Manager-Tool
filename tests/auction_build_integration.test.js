@@ -63,13 +63,24 @@ test('player search and filters sit between the auction and player table', () =>
   assert.ok(controlsIndex < tableIndex);
 });
 
-test('auction writes are connectivity-gated and use transactional state updates', () => {
+test('auction transitions are connectivity-gated and transactional; plain persist() is a set()', () => {
   const template = read('transferbrett_template.html');
 
   assert.match(template, /ref\('\.info\/connected'\)/);
-  assert.match(template, /stateRef\.transaction\(/);
   assert.match(template, /actorToken:\s*myToken/);
-  assert.doesNotMatch(template, /stateRef\.set\(coreStateForSync\(\)\)/);
+  // Auction moves (bid/nominate/finalize/...) go through runAuctionTransition(), which correctly
+  // recomputes its result from the fresh remoteCore on every retry -- that one legitimately needs
+  // stateRef.transaction(). The general persist() path (formation changes, edits, imports, ...)
+  // captured its payload once outside the transaction and returned that same stale snapshot on
+  // every retry regardless of remoteCore. Under real write traffic that can never converge:
+  // observed live as a permanent stateRef.transaction 'maxretry' failure (reproduced with only a
+  // single active user, so not a load/contention artifact) that silently stopped syncing state to
+  // Firebase for the rest of the session, and, on the rare successful attempt, overwrote history
+  // entries a concurrent auction transition had already committed (confirmed via duplicate
+  // `history[].id` values in a live export). persist() must therefore use a plain set(), matching
+  // its original, correct design.
+  assert.match(template, /function runAuctionTransition\(name, options, onSuccess, onFailure\)\{[\s\S]*?stateRef\.transaction\(/);
+  assert.match(template, /function persist\(\)\{[\s\S]*?stateRef\.set\(coreStateForSync\(\)\)/);
 });
 
 test('admin takeover remains available and transactional during a live auction', () => {
