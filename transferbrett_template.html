@@ -1071,8 +1071,14 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     });
   }
 
+  // Emergency escape hatch: ?offline=1 skips Firebase entirely so a broken/looping sync can never
+  // again overwrite a locally imported stand. Everything falls back to plain localStorage, exactly
+  // like opening this file with no internet at all.
+  var forceOffline = false;
+  try{ forceOffline = new URLSearchParams(window.location.search).get('offline') === '1'; } catch(e){}
+
   try{
-    if(window.firebase && FIREBASE_CONFIG.apiKey){
+    if(!forceOffline && window.firebase && FIREBASE_CONFIG.apiKey){
       firebase.initializeApp(FIREBASE_CONFIG);
       boardRef = firebase.database().ref('boards/' + BOARD_ID);
       stateRef = boardRef.child('state');
