@@ -1079,6 +1079,56 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   function isAdmin(){ return !!STATE.adminToken && STATE.adminToken === myToken; }
   function adminLocked(){ return !!STATE.adminToken && STATE.adminToken !== myToken; }
 
+  // ---- claiming admin requires a shared password; giving it up (changeAdmin(null)) does not ----
+  // Same salted-SHA-256 approach as the page-level access gate: only the hash is shipped, not the
+  // password itself. Not asked for again once entered correctly (myToken becomes the admin), only
+  // gates the moment someone TAKES the role.
+  var ADMIN_CLAIM_SALT = 'transferbrett-admin-claim-v1|';
+  var ADMIN_CLAIM_PASSWORD_HASH = '799c740bf14f5f38b370039e98a2cf024ef7ef603ffef5189a865f459b8c8bd8';
+  function adminSha256Hex(value){
+    if(!window.crypto || !window.crypto.subtle) return Promise.reject(new Error('crypto-unavailable'));
+    return window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)).then(function(buffer){
+      return Array.prototype.map.call(new Uint8Array(buffer), function(b){ return b.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function claimAdmin(){
+    var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
+    backdrop.addEventListener('click', function(ev){ if(ev.target===backdrop) closeModal(); });
+    var modal = document.createElement('div'); modal.className='modal';
+    var h = document.createElement('h3'); h.textContent = 'Admin-Passwort';
+    var sub = document.createElement('div'); sub.className='modal-sub'; sub.textContent = 'Um die Adminrolle zu übernehmen, bitte das Passwort eingeben.';
+    var input = document.createElement('input'); input.type='password'; input.autocomplete='off'; input.style.cssText='width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink);';
+    var err = document.createElement('div'); err.style.cssText='font-size:12px; color:var(--sold); font-weight:600; margin:8px 0 0; display:none;';
+    var actions = document.createElement('div'); actions.className='modal-actions';
+    var cancelBtn = document.createElement('button'); cancelBtn.className='btn small'; cancelBtn.textContent='Abbrechen';
+    cancelBtn.addEventListener('click', closeModal);
+    var okBtn = document.createElement('button'); okBtn.className='btn small primary'; okBtn.textContent='Übernehmen';
+    function submit(){
+      var pw = input.value;
+      err.style.display='none';
+      okBtn.disabled = true; okBtn.textContent = 'Prüfe…';
+      adminSha256Hex(ADMIN_CLAIM_SALT + pw).then(function(digest){
+        okBtn.disabled = false; okBtn.textContent = 'Übernehmen';
+        if(digest !== ADMIN_CLAIM_PASSWORD_HASH){
+          err.textContent = 'Falsches Passwort.'; err.style.display=''; input.value=''; input.focus();
+          return;
+        }
+        closeModal();
+        changeAdmin(myToken);
+      }).catch(function(){
+        okBtn.disabled = false; okBtn.textContent = 'Übernehmen';
+        err.textContent = 'Passwortprüfung nicht unterstützt.'; err.style.display='';
+      });
+    }
+    okBtn.addEventListener('click', submit);
+    input.addEventListener('keydown', function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); submit(); } });
+    actions.appendChild(cancelBtn); actions.appendChild(okBtn);
+    modal.appendChild(h); modal.appendChild(sub); modal.appendChild(input); modal.appendChild(err); modal.appendChild(actions);
+    backdrop.appendChild(modal);
+    document.getElementById('modalRoot').appendChild(backdrop);
+    input.focus();
+  }
+
   var MY_NAME_KEY = 'transferbrett_my_name_v1';
   var myName = null;
   try{ myName = localStorage.getItem(MY_NAME_KEY) || null; } catch(e){ myName = null; }
@@ -2511,7 +2561,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     } else {
       adminBtn.textContent = STATE.adminToken ? 'Admin übernehmen' : 'Admin werden';
       adminBtn.classList.add('primary');
-      adminBtn.addEventListener('click', function(){ changeAdmin(myToken); });
+      adminBtn.addEventListener('click', function(){ claimAdmin(); });
     }
     adminBtn.style.width='100%'; adminBtn.style.marginTop='-2px';
     adminBtn.disabled = auctionBusy || (auctionActive() && (!stateRef || !firebaseConnected));
