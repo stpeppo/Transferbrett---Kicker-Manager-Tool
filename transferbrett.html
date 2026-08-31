@@ -390,6 +390,17 @@ tbody tr.is-new td:first-child{box-shadow:inset 3px 0 0 var(--new);}
 .history-wrap tbody tr.undone{opacity:0.5;}
 .history-wrap tbody tr.undone .h-player{text-decoration:line-through;}
 .history-empty{padding:18px; text-align:center; color:var(--ink-dim); font-size:12.5px;}
+
+.changelog-entry{
+  background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow);
+  padding:14px 16px; margin-bottom:12px;
+}
+.changelog-date{
+  font-family:"Oswald", sans-serif; font-weight:600; letter-spacing:0.04em; text-transform:uppercase;
+  font-size:10.5px; color:var(--accent); margin-bottom:4px;
+}
+.changelog-entry ul{margin:4px 0 0; padding-left:18px; font-size:12.5px; line-height:1.6; color:var(--ink);}
+.changelog-entry li{margin-bottom:2px;}
 .h-badge{font-size:10.5px; font-weight:600; padding:2px 7px; border-radius:5px;}
 .h-badge.ok{background:var(--accent-dim); color:var(--accent);}
 .h-badge.undone{background:var(--sold-dim); color:var(--sold);}
@@ -448,6 +459,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       <div class="save-indicator">
         <button class="btn small" id="copyLinkBtn">Link kopieren</button>
         <button class="btn small" id="openHistoryBtn">Verlaufsprotokoll</button>
+        <button class="btn small" id="openChangelogBtn">Changelog</button>
         <button class="btn small" id="exportBtn">Stand exportieren</button>
         <button class="btn small" id="importBtn">Stand importieren</button>
         <input type="file" id="importFile" accept="application/json" style="display:none;">
@@ -591,6 +603,18 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         <button class="btn small" id="seasonTabElfBtn" type="button">Elf des Spieltags</button>
       </div>
       <div id="seasonContent"></div>
+    </div>
+  </div>
+
+  <div id="changelogView" style="display:none;">
+    <div class="history-section">
+      <div class="teams-head">
+        <h2>Changelog</h2>
+        <div style="display:flex; gap:8px;">
+          <button class="btn small primary" id="backToMainFromChangelogBtn">← Zurück zur Hauptseite</button>
+        </div>
+      </div>
+      <div id="changelogList"></div>
     </div>
   </div>
 
@@ -1538,6 +1562,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     document.getElementById('mainView').style.display = currentView==='main' ? '' : 'none';
     document.getElementById('historyView').style.display = currentView==='history' ? '' : 'none';
     document.getElementById('seasonView').style.display = currentView==='season' ? '' : 'none';
+    document.getElementById('changelogView').style.display = currentView==='changelog' ? '' : 'none';
   }
 
   function setSave(mode, text){
@@ -3549,6 +3574,61 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     buildRosterTable('Rest des Kaders (nicht gewertet)', result.bench, false);
   }
 
+  // ================= Changelog =================
+  // Handgepflegt, neueste Eintraege zuerst. Bei jeder nennenswerten Aenderung am Tool hier
+  // einen Eintrag ergaenzen.
+  var CHANGELOG = [
+    {date:'31.08.2026', items:[
+      'Teamkachel lässt sich per Klick maximieren und zeigt den kompletten Kader ohne Scrollen.',
+      'Voller Spielername erscheint als Tooltip, wenn man im Kader mit der Maus darüber geht.',
+      'Kaufpreise im Kader werden nur noch beim eigenen Team angezeigt, bei anderen Teams steht "privat".',
+      '"Saisonauswertung"-Button oben deutlich größer und prominenter platziert.',
+      'Top-Elf der Saison wird direkt in der Saison-Tabellenansicht mit angezeigt.',
+      'Dropdown-Menüs im Dark Mode repariert (waren weiße Schrift auf weißem Grund, unlesbar).',
+      'Fehler behoben: importierte Spieltage verschwanden nach dem nächsten Sync wieder.',
+      'Admin kann Teilnehmer aus dem Spiel entfernen ("kicken").',
+      'Saison-Auswertung eingeführt: Spieltag-Import per kicker.de-CSV, Tabelle mit Punkten & Strafgeld, Kader je Team und Spieltag, Elf des Spieltags/der Saison.'
+    ]},
+    {date:'30.08.2026', items:[
+      'Admin-Übernahme ist jetzt mit einem gemeinsamen Passwort gesperrt.',
+      'Verbindungsproblem behoben, bei dem die Datenbank unter Last dauerhaft hängen blieb.',
+      'Notausstieg per Link-Zusatz "?offline=1", falls die Datenbank mal Probleme macht.',
+      'Genauere Fehlermeldung, wenn das Online-Speichern mal fehlschlägt.'
+    ]},
+    {date:'29.08.2026', items:[
+      'Verbindung zur Datenbank baut sich jetzt automatisch neu auf, wenn sie kurz abbricht.'
+    ]},
+    {date:'28.08.2026', items:[
+      'Live-Auktion eingeführt: Spieler reihum nominieren, live bieten, Gebotsverlauf, eigene Auktionsreihenfolge festlegen.',
+      'Aktiver Spielaustritt möglich.',
+      'Fremde Teambudgets werden ausgeblendet ("privat").',
+      'Spielerdatenbank auf den aktuellen kicker.de-Export aktualisiert.',
+      'Zugang zum Tool insgesamt mit Passwort geschützt.'
+    ]},
+    {date:'27.08.2026', items:[
+      'Live-Sync über Firebase eingeführt – alle Geräte sehen denselben Spielstand in Echtzeit.',
+      'Mehrere Spiele gleichzeitig über einen eigenen Spiel-Code möglich.',
+      'Teilnehmer können sich optional einem Team zuordnen.',
+      'Formation je Team wählbar.',
+      'Kaderposition wird direkt in der Teamkarte angezeigt.'
+    ]}
+  ];
+  function renderChangelog(){
+    var list = document.getElementById('changelogList');
+    list.innerHTML = '';
+    CHANGELOG.forEach(function(entry){
+      var box = document.createElement('div'); box.className='changelog-entry';
+      var date = document.createElement('div'); date.className='changelog-date'; date.textContent = entry.date;
+      box.appendChild(date);
+      var ul = document.createElement('ul');
+      entry.items.forEach(function(text){
+        var li = document.createElement('li'); li.textContent = text; ul.appendChild(li);
+      });
+      box.appendChild(ul);
+      list.appendChild(box);
+    });
+  }
+
   function render(){
     try{
       renderImpl();
@@ -3689,6 +3769,13 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     currentView = 'main'; render();
   });
 
+  document.getElementById('openChangelogBtn').addEventListener('click', function(){
+    currentView = 'changelog'; render();
+  });
+  document.getElementById('backToMainFromChangelogBtn').addEventListener('click', function(){
+    currentView = 'main'; render();
+  });
+
   document.getElementById('openSeasonBtn').addEventListener('click', function(){
     currentView = 'season'; seasonSelectedTeamId = null; render();
   });
@@ -3777,6 +3864,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     selected.clear(); render();
   });
 
+  renderChangelog();
   render();
 })();
 </script>
