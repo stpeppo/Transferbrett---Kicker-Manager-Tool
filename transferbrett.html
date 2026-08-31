@@ -1543,17 +1543,20 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     } else { fail(); }
   });
 
-  // Core game state (teams, purchases, history, admin-status, ...) — everything EXCEPT presence.
-  // Presence lives in its own path so it can be written independently (see below).
+  // Core game state (teams, purchases, history, admin-status, ...) — everything EXCEPT presence and
+  // matchdays. Both live on their own paths so a plain persist() from any concurrent browser (e.g.
+  // someone else picking a formation) can never overwrite an admin's matchday import, or vice versa
+  // — the exact same reasoning that already keeps presence heartbeats from clobbering purchases.
   function coreStateForSync(){
     var copy = {};
-    for(var k in STATE){ if(k !== 'presence') copy[k] = STATE[k]; }
+    for(var k in STATE){ if(k !== 'presence' && k !== 'matchdays') copy[k] = STATE[k]; }
     return copy;
   }
   function applyRemoteCoreState(remoteCore){
-    var presence = STATE.presence;
+    var presence = STATE.presence, matchdays = STATE.matchdays;
     STATE = remoteCore;
     STATE.presence = presence || {};
+    STATE.matchdays = matchdays || {};
     normalizeState();
     recomputeSequences();
     render();
@@ -1565,10 +1568,17 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     render();
     saveLocal();
   }
+  function applyRemoteMatchdays(remoteMatchdays){
+    STATE.matchdays = remoteMatchdays || {};
+    normalizeState();
+    render();
+    saveLocal();
+  }
 
   var boardRef = null;
   var stateRef = null;
   var presenceRef = null;
+  var matchdaysRef = null;
   var connectionRef = null;
   var firebaseConnected = false;
   var stateInitializationPending = false;
@@ -1698,6 +1708,14 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       setTimeout(attachPresenceListener, RECONNECT_DELAY_MS);
     });
   }
+  function attachMatchdaysListener(){
+    if(!matchdaysRef) return;
+    matchdaysRef.on('value', function(snapshot){
+      applyRemoteMatchdays(snapshot.val());
+    }, function(){
+      setTimeout(attachMatchdaysListener, RECONNECT_DELAY_MS);
+    });
+  }
 
   // Emergency escape hatch: ?offline=1 skips Firebase entirely so a broken/looping sync can never
   // again overwrite a locally imported stand. Everything falls back to plain localStorage, exactly
@@ -1711,17 +1729,20 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       boardRef = firebase.database().ref('boards/' + BOARD_ID);
       stateRef = boardRef.child('state');
       presenceRef = boardRef.child('presence');
+      matchdaysRef = boardRef.child('matchdays');
       connectionRef = firebase.database().ref('.info/connected');
       setSave('busy', 'verbinde…');
       attachConnectionListener();
       attachStateListener();
       attachPresenceListener();
+      attachMatchdaysListener();
     } else {
       setSave('', 'Offline-Modus: wird lokal im Browser gespeichert');
     }
   } catch(e){
     stateRef = null;
     presenceRef = null;
+    matchdaysRef = null;
     connectionRef = null;
     firebaseConnected = false;
     setSave('', 'Offline-Modus: wird lokal im Browser gespeichert');
@@ -2180,11 +2201,23 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       var players = {};
       exact.forEach(function(r){ players[r.player.id] = rowToMatchdayEntry(r.row); });
       fuzzyChecks.forEach(function(fc){ if(fc.cb.checked) players[fc.entry.player.id] = rowToMatchdayEntry(fc.entry.row); });
-      STATE.matchdays[mdId] = {importedAt: Date.now(), players: players};
+      var entry = {importedAt: Date.now(), players: players};
+      // Written straight to matchdaysRef (its own path, like presence) rather than through the
+      // general persist(): a concurrent unrelated edit from anyone else (formation, etc.) calling
+      // plain persist() around the same moment must never be able to overwrite this import.
+      STATE.matchdays[mdId] = entry; // optimistic local update, confirmed by the listener echo below
       closeModal();
       seasonSelectedMatchday = mdId; seasonSelectedTeamId = null;
-      render(); persist();
-      openInfoModal('Spieltag ' + mdId + ' importiert: ' + Object.keys(players).length + ' Spieler.', 'Import erfolgreich');
+      render(); saveLocal();
+      if(matchdaysRef && firebaseConnected){
+        matchdaysRef.child(mdId).set(entry).then(function(){
+          openInfoModal('Spieltag ' + mdId + ' importiert: ' + Object.keys(players).length + ' Spieler.', 'Import erfolgreich');
+        }).catch(function(error){
+          openInfoModal('Online-Speichern fehlgeschlagen (' + (error && (error.code||error.message)||'unbekannt') + '), nur lokal gesichert.', 'Import teilweise fehlgeschlagen');
+        });
+      } else {
+        openInfoModal('Spieltag ' + mdId + ' importiert (lokal, keine Verbindung): ' + Object.keys(players).length + ' Spieler.', 'Import erfolgreich (offline)');
+      }
     });
     actions2.appendChild(cancelBtn); actions2.appendChild(okBtn2);
     modal.appendChild(actions2);
