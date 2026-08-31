@@ -333,7 +333,9 @@ tbody tr.is-new td:first-child{box-shadow:inset 3px 0 0 var(--new);}
 .btn.danger{color:var(--sold);}
 .btn.danger:hover{border-color:var(--sold);}
 .btn.small{padding:3px 7px; font-size:11px;}
+.btn.large{padding:13px 26px; font-size:16px; border-radius:11px; letter-spacing:0.2px;}
 .btn:disabled{opacity:0.45; cursor:not-allowed;}
+.season-cta-row{margin-top:14px;}
 
 .sold-tag{
   font-size:11px; font-weight:600; color:var(--sold); background:var(--sold-dim);
@@ -436,13 +438,15 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       </div>
       <div class="save-indicator">
         <button class="btn small" id="copyLinkBtn">Link kopieren</button>
-        <button class="btn small" id="openSeasonBtn">Saison</button>
         <button class="btn small" id="openHistoryBtn">Verlaufsprotokoll</button>
         <button class="btn small" id="exportBtn">Stand exportieren</button>
         <button class="btn small" id="importBtn">Stand importieren</button>
         <input type="file" id="importFile" accept="application/json" style="display:none;">
         <span class="save-dot" id="saveDot"></span><span id="saveText">bereit</span>
       </div>
+    </div>
+    <div class="season-cta-row">
+      <button class="btn primary large" id="openSeasonBtn">Saisonauswertung</button>
     </div>
     <div class="admin-banner" id="adminBanner"></div>
     <div class="presence-row" id="presenceRow"></div>
@@ -3415,10 +3419,15 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var hint = document.createElement('div'); hint.style.cssText='font-size:11.5px; color:var(--ink-dim); margin-top:8px;';
     hint.textContent = 'Klick auf ein Team für den kompletten Kader mit Punkten.' + (seasonSelectedMatchday ? '' : ' Strafgeld: Summe über alle importierten Spieltage (Rang × 40 Cent je Spieltag).');
     container.appendChild(hint);
+    if(!seasonSelectedMatchday){
+      var elfHead = document.createElement('h3'); elfHead.style.cssText='margin:24px 0 10px; font-size:15px;'; elfHead.textContent='Top-Elf der Saison';
+      container.appendChild(elfHead);
+      buildAllStarTable(container, null);
+    }
   }
 
-  function renderSeasonElf(container){
-    var entries = allStarEleven(seasonSelectedMatchday || null);
+  function buildAllStarTable(container, mdId){
+    var entries = allStarEleven(mdId);
     if(entries.length===0){
       var e = document.createElement('div'); e.className='history-empty'; e.textContent='Noch keine gekauften Spieler mit Punkten für diese Auswahl.';
       container.appendChild(e); return;
@@ -3439,6 +3448,10 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     });
     table.appendChild(thead); table.appendChild(tbody);
     container.appendChild(table);
+  }
+
+  function renderSeasonElf(container){
+    buildAllStarTable(container, seasonSelectedMatchday || null);
   }
 
   function renderSeasonTeamDetail(container, team){
