@@ -2667,7 +2667,9 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         var row = document.createElement('div'); row.className='roster-row';
         var pos = document.createElement('span'); pos.className='pos-tag'; pos.textContent=p.p;
         var nm = document.createElement('div'); nm.className='roster-name'; nm.textContent=p.n; nm.title=p.n;
-        var pr = document.createElement('div'); pr.className='roster-price'; pr.textContent=fmtMio(pu.price);
+        var pr = document.createElement('div'); pr.className='roster-price';
+        if(mayViewBudget){ pr.textContent=fmtMio(pu.price); }
+        else { pr.textContent='privat'; pr.style.color='var(--ink-dim)'; }
         var x = document.createElement('button'); x.className='roster-x'; x.textContent='×'; x.title='Kauf rückgängig machen';
         x.disabled = !amAdmin || normalChangesLocked();
         if(!amAdmin) x.style.visibility='hidden';
