@@ -1485,6 +1485,55 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     }, 'Spiel verlassen');
   }
 
+  // Admin-initiated equivalent of leaveGame() for a chosen participant (e.g. stale/duplicate test
+  // entries after setup). Same transaction shape, just with the target's token instead of myToken.
+  function kickParticipant(targetToken, targetName){
+    if(!isAdmin()) return;
+    if(!stateRef || !presenceRef || !firebaseConnected){
+      openInfoModal('Zum Entfernen ist eine Verbindung zum gemeinsamen Spiel erforderlich.', 'Entfernen nicht möglich');
+      return;
+    }
+    var message = auctionActive()
+      ? (targetName + ' wird sofort aus der laufenden Auktion und der Nominierungsreihenfolge entfernt. Bereits abgegebene Gebote bleiben gültig.')
+      : (targetName + ' wird sofort aus der Liste der anwesenden Spieler entfernt.');
+    openConfirmModal(message, function(){
+      if(auctionBusy) return;
+      auctionBusy = true;
+      var kickError = null;
+      stateRef.transaction(function(remoteCore){
+        if(!remoteCore){ kickError = new Error('Der gemeinsame Spielstand ist noch nicht verfügbar.'); return; }
+        try{
+          if(remoteCore.auction && remoteCore.auction.active){
+            remoteCore.presence = STATE.presence || {};
+            var next = window.TransferbrettAuction.leaveSession(remoteCore, {token:targetToken, now:Date.now()});
+            delete next.presence;
+            kickError = null;
+            return next;
+          }
+          if(remoteCore.adminToken===targetToken){
+            var withoutAdmin = {};
+            Object.keys(remoteCore).forEach(function(key){ withoutAdmin[key]=remoteCore[key]; });
+            withoutAdmin.adminToken = null;
+            return withoutAdmin;
+          }
+          return remoteCore;
+        } catch(error){ kickError=error; return; }
+      }, function(error, committed){
+        auctionBusy = false;
+        if(error){ openInfoModal('Konnte nicht entfernt werden: ' + error.message, 'Verbindung fehlgeschlagen'); render(); return; }
+        if(!committed){ openInfoModal(auctionErrorMessage(kickError), 'Entfernen fehlgeschlagen'); render(); return; }
+        presenceRef.child(targetToken).remove().then(function(){
+          delete STATE.presence[targetToken];
+          saveLocal();
+          setAuctionMessage(targetName + ' wurde entfernt.', true);
+          render();
+        }).catch(function(error){
+          openInfoModal('Aus der Auktion entfernt, aber die Anwesenheitsanzeige konnte nicht aktualisiert werden: ' + error.message, 'Verbindung fehlgeschlagen');
+        });
+      }, false);
+    }, 'Entfernen');
+  }
+
   function doExport(onDone){
     try{
       var stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
@@ -2674,6 +2723,12 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         }
         var timeSpan = document.createElement('span'); timeSpan.className='presence-time'; timeSpan.textContent = fmtAgo(e.lastSeen);
         pill.appendChild(timeSpan);
+        if(isAdmin() && e.tok!==myToken){
+          var kickBtn = document.createElement('button'); kickBtn.className='roster-x'; kickBtn.textContent='✕'; kickBtn.title='Aus dem Spiel entfernen';
+          kickBtn.disabled = auctionBusy || !stateRef || !presenceRef || !firebaseConnected;
+          kickBtn.addEventListener('click', function(ev){ ev.stopPropagation(); kickParticipant(e.tok, e.name); });
+          pill.appendChild(kickBtn);
+        }
         row.appendChild(pill);
       });
     }
