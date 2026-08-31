@@ -1084,8 +1084,16 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     if(typeof STATE.adminToken !== 'string') STATE.adminToken = null;
     if(!Array.isArray(STATE.history)) STATE.history = [];
 
-    // season/matchday results, imported from kicker.de per-matchday CSV exports (see importMatchdayCsv)
-    if(!STATE.matchdays || typeof STATE.matchdays !== 'object' || Array.isArray(STATE.matchdays)) STATE.matchdays = {};
+    // season/matchday results, imported from kicker.de per-matchday CSV exports (see importMatchdayCsv).
+    // Firebase RTDB coerces an object whose keys are all small sequential integers ("1","2",...) into
+    // a JSON array on read -- matchday IDs are exactly that, so convert back to a plain object here
+    // instead of wiping the data.
+    if(Array.isArray(STATE.matchdays)){
+      var matchdaysObj = {};
+      STATE.matchdays.forEach(function(md, idx){ if(md != null) matchdaysObj[idx] = md; });
+      STATE.matchdays = matchdaysObj;
+    }
+    if(!STATE.matchdays || typeof STATE.matchdays !== 'object') STATE.matchdays = {};
     Object.keys(STATE.matchdays).forEach(function(mdId){
       var md = STATE.matchdays[mdId];
       if(!md || typeof md !== 'object' || Array.isArray(md) || !md.players || typeof md.players !== 'object'){
