@@ -271,6 +271,11 @@ h1{
 .roster-price{font-family:"IBM Plex Mono", monospace; color:var(--gold); white-space:nowrap;}
 .roster-x{border:none; background:none; color:var(--ink-dim); font-size:14px; line-height:1; padding:1px 3px; border-radius:5px;}
 .roster-x:hover{color:var(--sold); background:var(--sold-dim);}
+.name-tooltip{
+  position:fixed; display:none; z-index:1000; pointer-events:none;
+  background:var(--ink); color:var(--bg); font-size:11.5px; font-weight:600;
+  padding:5px 9px; border-radius:7px; box-shadow:var(--shadow); white-space:nowrap;
+}
 .team-drop-hint{font-size:11px; color:var(--ink-dim); text-align:center; padding:6px 2px; border:1.5px dashed var(--line); border-radius:7px;}
 
 /* ---------- Table ---------- */
@@ -2526,6 +2531,21 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     return tr;
   }
 
+  // Custom tooltip for truncated roster names -- native title-attribute tooltips have a long
+  // delay and get clipped by .roster-list's overflow:auto, so we position a fixed-position
+  // element ourselves instead (fixed positioning escapes ancestor overflow clipping).
+  var nameTooltipEl = null;
+  function showNameTooltip(el, text){
+    if(!nameTooltipEl){ nameTooltipEl = document.createElement('div'); nameTooltipEl.className='name-tooltip'; document.body.appendChild(nameTooltipEl); }
+    nameTooltipEl.textContent = text;
+    nameTooltipEl.style.display = 'block';
+    var r = el.getBoundingClientRect();
+    nameTooltipEl.style.left = Math.max(4, r.left) + 'px';
+    nameTooltipEl.style.top = (r.top - 6) + 'px';
+    nameTooltipEl.style.transform = 'translateY(-100%)';
+  }
+  function hideNameTooltip(){ if(nameTooltipEl) nameTooltipEl.style.display = 'none'; }
+
   function renderTeamCard(team){
     var card = document.createElement('div'); card.className='team-card'; card.dataset.teamId=team.id;
     var amAdmin = isAdmin();
@@ -2666,7 +2686,9 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         var pu = STATE.purchases[pid];
         var row = document.createElement('div'); row.className='roster-row';
         var pos = document.createElement('span'); pos.className='pos-tag'; pos.textContent=p.p;
-        var nm = document.createElement('div'); nm.className='roster-name'; nm.textContent=p.n; nm.title=p.n;
+        var nm = document.createElement('div'); nm.className='roster-name'; nm.textContent=p.n;
+        nm.addEventListener('mouseenter', function(){ showNameTooltip(nm, p.n); });
+        nm.addEventListener('mouseleave', hideNameTooltip);
         var pr = document.createElement('div'); pr.className='roster-price';
         if(mayViewBudget){ pr.textContent=fmtMio(pu.price); }
         else { pr.textContent='privat'; pr.style.color='var(--ink-dim)'; }
