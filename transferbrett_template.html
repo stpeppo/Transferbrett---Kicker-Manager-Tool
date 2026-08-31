@@ -250,6 +250,10 @@ h1{
 }
 .team-card.drag-over{border-color:var(--accent); background:var(--accent-dim);}
 .team-card.over-budget{border-color:var(--sold);}
+.team-card:not(.expanded){cursor:pointer;}
+.team-card:not(.expanded):hover{border-color:var(--accent);}
+.team-card.expanded{grid-column:1 / -1; cursor:default;}
+.team-card.expanded .roster-list{max-height:none; overflow:visible;}
 .team-name-input{
   font-family:"Oswald", sans-serif; font-weight:600; font-size:14.5px; border:none; background:transparent;
   color:var(--ink); padding:2px 0; width:100%; border-bottom:1px dashed transparent;
@@ -2546,10 +2550,20 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   }
   function hideNameTooltip(){ if(nameTooltipEl) nameTooltipEl.style.display = 'none'; }
 
+  // Which team cards are maximized (per-browser display preference only, not synced/persisted).
+  var expandedTeamIds = {};
+
   function renderTeamCard(team){
     var card = document.createElement('div'); card.className='team-card'; card.dataset.teamId=team.id;
     var amAdmin = isAdmin();
     var mayViewBudget = canViewTeamBudget(team.id);
+    var isExpanded = !!expandedTeamIds[team.id];
+    if(isExpanded) card.classList.add('expanded');
+    card.addEventListener('click', function(ev){
+      if(ev.target.closest('button, input, select, a')) return;
+      expandedTeamIds[team.id] = !expandedTeamIds[team.id];
+      render();
+    });
 
     var nameRow = document.createElement('div'); nameRow.style.display='flex'; nameRow.style.alignItems='center'; nameRow.style.gap='4px';
     var nameInp = document.createElement('input'); nameInp.className='team-name-input'; nameInp.value=team.name; nameInp.style.flex='1';
