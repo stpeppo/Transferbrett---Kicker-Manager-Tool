@@ -36,6 +36,7 @@ state = json.dumps(
         "deletedPlayers": [],
         "presence": {},
         "auction": None,
+        "matchdays": {},
     },
     ensure_ascii=False,
 )

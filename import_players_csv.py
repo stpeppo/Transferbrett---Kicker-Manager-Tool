@@ -37,6 +37,7 @@ def convert(csv_path):
             players.append({
                 "id": row["ID"],
                 "n": row["Angezeigter Name"],
+                "k": row["Angezeigter Name (kurz)"],
                 "c": row["Verein"],
                 "p": pos,
                 "v": int(row["Marktwert"]),

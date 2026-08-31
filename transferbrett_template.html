@@ -431,6 +431,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       </div>
       <div class="save-indicator">
         <button class="btn small" id="copyLinkBtn">Link kopieren</button>
+        <button class="btn small" id="openSeasonBtn">Saison</button>
         <button class="btn small" id="openHistoryBtn">Verlaufsprotokoll</button>
         <button class="btn small" id="exportBtn">Stand exportieren</button>
         <button class="btn small" id="importBtn">Stand importieren</button>
@@ -553,6 +554,25 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         </div>
       </div>
       <div class="history-wrap" id="historyWrap"></div>
+    </div>
+  </div>
+
+  <div id="seasonView" style="display:none;">
+    <div class="history-section">
+      <div class="teams-head">
+        <h2>Saison</h2>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <select id="seasonMatchdaySelect"></select>
+          <button class="btn small" id="seasonImportBtn" style="display:none;">Spieltag importieren</button>
+          <input type="file" id="seasonImportFile" accept=".csv,text/csv" style="display:none;">
+          <button class="btn small primary" id="backToMainFromSeasonBtn">← Zurück zur Hauptseite</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:14px;" id="seasonTabRow">
+        <button class="btn small primary" id="seasonTabTableBtn" type="button">Tabelle</button>
+        <button class="btn small" id="seasonTabElfBtn" type="button">Elf des Spieltags</button>
+      </div>
+      <div id="seasonContent"></div>
     </div>
   </div>
 
@@ -694,6 +714,153 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     {key:'5-4-1', ABW:5, MF:4, ST:1}
   ];
   var FORMATION_BY_KEY = {}; FORMATIONS.forEach(function(f){ FORMATION_BY_KEY[f.key]=f; });
+
+  // ================= Saison: Spieltag-Import, Namensabgleich, Punkte-Berechnung =================
+  // kicker.de's own matchday-results export spells club names and player short-names slightly
+  // differently than its player-list export (observed on real data, not hypothetical). Matching
+  // therefore runs three tiers, cheapest/most-certain first, and anything left over is surfaced to
+  // the admin instead of guessed silently.
+  var MATCHDAY_CLUB_ALIASES = {
+    'Borussia Mönchengladbach': 'Bor. Mönchengladbach',
+    'FC Bayern München': 'Bayern München',
+    'SV 07 Elversberg': 'SV Elversberg',
+    'SV Werder Bremen': 'Werder Bremen'
+  };
+  function matchdayNormClub(c){ return MATCHDAY_CLUB_ALIASES[c] || c; }
+
+  function levenshtein(a, b){
+    a = (a||'').toLowerCase(); b = (b||'').toLowerCase();
+    var m = a.length, n = b.length;
+    if(m===0) return n; if(n===0) return m;
+    var prev = []; for(var j=0;j<=n;j++) prev[j]=j;
+    for(var i=1;i<=m;i++){
+      var cur = [i];
+      for(var j2=1;j2<=n;j2++){
+        var cost = a.charAt(i-1)===b.charAt(j2-1) ? 0 : 1;
+        cur[j2] = Math.min(prev[j2]+1, cur[j2-1]+1, prev[j2-1]+cost);
+      }
+      prev = cur;
+    }
+    return prev[n];
+  }
+  function nameSimilarity(a, b){
+    var dist = levenshtein(a, b);
+    var maxLen = Math.max((a||'').length, (b||'').length) || 1;
+    return 1 - dist/maxLen;
+  }
+
+  // Returns {player, confidence:'exact'|'exact-other-club'|'fuzzy'} or null if no safe match exists.
+  function findPlayerForMatchdayRow(club, shortName){
+    var normClub = matchdayNormClub(club);
+    var inClub = BASE_PLAYERS.filter(function(p){ return p.c === normClub; });
+    var exact = inClub.filter(function(p){ return p.k === shortName; });
+    if(exact.length === 1) return {player: exact[0], confidence: 'exact'};
+    var exactAny = BASE_PLAYERS.filter(function(p){ return p.k === shortName; });
+    if(exactAny.length === 1) return {player: exactAny[0], confidence: 'exact-other-club'};
+    var pool = inClub.length ? inClub : BASE_PLAYERS;
+    var scored = pool.map(function(p){
+      return {p:p, score: Math.max(nameSimilarity(p.k, shortName), nameSimilarity(p.n, shortName))};
+    }).filter(function(x){ return x.score >= 0.6; }).sort(function(a,b){ return b.score - a.score; });
+    if(scored.length && (scored.length===1 || scored[0].score - scored[1].score >= 0.15)){
+      return {player: scored[0].p, confidence: 'fuzzy'};
+    }
+    return null;
+  }
+
+  function parseMatchdayCsv(text){
+    var lines = text.split(/\r\n|\n|\r/).filter(function(l){ return l.trim().length; });
+    if(!lines.length) return [];
+    var header = lines[0].split(';').map(function(h){ return h.trim(); });
+    var idx = {}; header.forEach(function(h,i){ idx[h]=i; });
+    var rows = [];
+    for(var i=1;i<lines.length;i++){
+      var cols = lines[i].split(';');
+      var status = (cols[idx.Status]||'').trim();
+      if(status === 'Teampunkte') continue; // real-club total row, not an individual player
+      rows.push({
+        club: (cols[idx.Verein]||'').trim(),
+        status: status === 'Start' ? 'start' : 'bench',
+        name: (cols[idx.Spieler]||'').trim(),
+        points: parseFloat(cols[idx.Punkte]) || 0,
+        redCard: cols[idx.RoteKarte]==='1',
+        yellowRedCard: cols[idx.GelbRoteKarte]==='1',
+        assists: parseInt(cols[idx.Vorlagen],10) || 0,
+        goals: parseInt(cols[idx.Tore],10) || 0,
+        motm: cols[idx.SpielerDesSpiels]==='1'
+      });
+    }
+    return rows;
+  }
+
+  // Which of a team's squad count toward its matchday score: the formation's slot count per
+  // position, filled by that matchday's top scorers within each position -- not a manually chosen
+  // lineup. Players beyond the slot count still show their real points, just don't count.
+  function teamMatchdayResult(team, mdId){
+    var md = STATE.matchdays[mdId];
+    var ids = purchasedIds().filter(function(pid){ return STATE.purchases[pid].teamId===team.id; });
+    var byPos = {TW:[], ABW:[], MF:[], ST:[]};
+    ids.forEach(function(pid){
+      var p = PBY[pid]; if(!p || !byPos[p.p]) return;
+      var e = md && md.players[pid];
+      byPos[p.p].push({playerId:pid, player:p, points: e ? e.points : 0, played: !!e, status: e ? e.status : null});
+    });
+    POS_ORDER.forEach(function(pos){ byPos[pos].sort(function(a,b){ return b.points-a.points; }); });
+    var hasFormation = !!(team.formation && FORMATION_BY_KEY[team.formation]);
+    var need = {TW:1, ABW:0, MF:0, ST:0};
+    if(hasFormation){
+      var f = FORMATION_BY_KEY[team.formation];
+      need.ABW=f.ABW; need.MF=f.MF; need.ST=f.ST;
+    }
+    var starters = [], bench = [];
+    POS_ORDER.forEach(function(pos){
+      byPos[pos].forEach(function(entry, i){ (i < need[pos] ? starters : bench).push(entry); });
+    });
+    var total = hasFormation ? starters.reduce(function(s,e){ return s+e.points; }, 0) : 0;
+    return {total: total, starters: starters, bench: bench, hasFormation: hasFormation};
+  }
+
+  function matchdayIdsSorted(){
+    return Object.keys(STATE.matchdays).sort(function(a,b){ return Number(a)-Number(b); });
+  }
+  function matchdayStandings(mdId){
+    var rows = STATE.teams.map(function(team){ return {team:team, result: teamMatchdayResult(team, mdId)}; });
+    rows.sort(function(a,b){ return b.result.total - a.result.total; });
+    rows.forEach(function(r, idx){ r.rank = idx+1; r.strafgeld = (idx+1)*0.4; });
+    return rows;
+  }
+  function seasonStandings(){
+    var mdIds = matchdayIdsSorted();
+    var strafgeldByTeam = {};
+    mdIds.forEach(function(mdId){
+      matchdayStandings(mdId).forEach(function(r){
+        strafgeldByTeam[r.team.id] = (strafgeldByTeam[r.team.id]||0) + r.strafgeld;
+      });
+    });
+    var rows = STATE.teams.map(function(team){
+      var total = mdIds.reduce(function(s,mdId){ return s + teamMatchdayResult(team, mdId).total; }, 0);
+      return {team:team, total: total, strafgeld: strafgeldByTeam[team.id] || 0};
+    });
+    rows.sort(function(a,b){ return b.total-a.total; });
+    rows.forEach(function(r, idx){ r.rank = idx+1; });
+    return rows;
+  }
+  // Elf des Spieltags/der Saison: the 11 individually highest-scoring owned players across ALL
+  // teams, no formation involved (per stpeppo: "einfach die elf besten Spieler ... in einer Tabelle").
+  function allStarEleven(mdId){
+    var entries = [];
+    STATE.teams.forEach(function(team){
+      var ids = purchasedIds().filter(function(pid){ return STATE.purchases[pid].teamId===team.id; });
+      ids.forEach(function(pid){
+        var p = PBY[pid]; if(!p) return;
+        var pts;
+        if(mdId){ var md = STATE.matchdays[mdId]; pts = (md && md.players[pid]) ? md.players[pid].points : 0; }
+        else { pts = matchdayIdsSorted().reduce(function(s,id){ var md=STATE.matchdays[id]; return s + ((md && md.players[pid]) ? md.players[pid].points : 0); }, 0); }
+        entries.push({playerId:pid, player:p, points:pts, teamId:team.id, teamName:team.name});
+      });
+    });
+    entries.sort(function(a,b){ return b.points-a.points; });
+    return entries.slice(0, 11);
+  }
 
   // ---- per-browser identity (never part of the shared/published state) ----
   var MY_TOKEN_KEY = 'transferbrett_my_token_v1';
@@ -888,6 +1055,27 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     if(typeof STATE.adminToken !== 'string') STATE.adminToken = null;
     if(!Array.isArray(STATE.history)) STATE.history = [];
 
+    // season/matchday results, imported from kicker.de per-matchday CSV exports (see importMatchdayCsv)
+    if(!STATE.matchdays || typeof STATE.matchdays !== 'object' || Array.isArray(STATE.matchdays)) STATE.matchdays = {};
+    Object.keys(STATE.matchdays).forEach(function(mdId){
+      var md = STATE.matchdays[mdId];
+      if(!md || typeof md !== 'object' || Array.isArray(md) || !md.players || typeof md.players !== 'object'){
+        delete STATE.matchdays[mdId];
+        return;
+      }
+      Object.keys(md.players).forEach(function(pid){
+        var e = md.players[pid];
+        if(!e || typeof e !== 'object'){ delete md.players[pid]; return; }
+        if(typeof e.points !== 'number' || isNaN(e.points)) e.points = 0;
+        if(e.status !== 'start' && e.status !== 'bench') e.status = 'bench';
+        e.goals = (typeof e.goals === 'number' && e.goals>0) ? e.goals : 0;
+        e.assists = (typeof e.assists === 'number' && e.assists>0) ? e.assists : 0;
+        e.redCard = !!e.redCard;
+        e.yellowRedCard = !!e.yellowRedCard;
+        e.motm = !!e.motm;
+      });
+    });
+
     // live auction session; detailed transition validation lives in auction_logic.js
     if(!STATE.auction || typeof STATE.auction !== 'object' || Array.isArray(STATE.auction)){
       STATE.auction = null;
@@ -925,6 +1113,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   function applyView(){
     document.getElementById('mainView').style.display = currentView==='main' ? '' : 'none';
     document.getElementById('historyView').style.display = currentView==='history' ? '' : 'none';
+    document.getElementById('seasonView').style.display = currentView==='season' ? '' : 'none';
   }
 
   function setSave(mode, text){
@@ -1481,6 +1670,80 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     actions.appendChild(okBtn);
     modal.appendChild(h); modal.appendChild(sub); modal.appendChild(actions);
     backdrop.appendChild(modal); root.appendChild(backdrop);
+  }
+
+  function rowToMatchdayEntry(row){
+    return {points: row.points, status: row.status, goals: row.goals, assists: row.assists, redCard: row.redCard, yellowRedCard: row.yellowRedCard, motm: row.motm};
+  }
+
+  function openMatchdayImportModal(rows){
+    var resolved = [], unresolved = [];
+    rows.forEach(function(row){
+      var m = findPlayerForMatchdayRow(row.club, row.name);
+      if(m) resolved.push({row:row, player:m.player, confidence:m.confidence});
+      else unresolved.push({row:row});
+    });
+    var fuzzy = resolved.filter(function(r){ return r.confidence==='fuzzy'; });
+    var exact = resolved.filter(function(r){ return r.confidence!=='fuzzy'; });
+
+    var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
+    backdrop.addEventListener('click', function(ev){ if(ev.target===backdrop) closeModal(); });
+    var modal = document.createElement('div'); modal.className='modal'; modal.style.maxWidth='640px'; modal.style.maxHeight='85vh'; modal.style.overflow='auto';
+    var h2 = document.createElement('h3'); h2.textContent = 'Spieltag importieren';
+    var sub2 = document.createElement('div'); sub2.className='modal-sub';
+    sub2.textContent = exact.length + ' sicher zugeordnet, ' + fuzzy.length + ' unsicher (bitte prüfen), ' + unresolved.length + ' nicht zuordenbar.';
+    modal.appendChild(h2); modal.appendChild(sub2);
+
+    var mdLabel = document.createElement('label'); mdLabel.textContent = 'Spieltag-Nummer';
+    var existingMd = matchdayIdsSorted().map(Number);
+    var nextMd = existingMd.length ? Math.max.apply(null, existingMd) + 1 : 1;
+    var mdInput = document.createElement('input'); mdInput.type='number'; mdInput.min='1'; mdInput.max='34'; mdInput.value=nextMd;
+    mdInput.style.cssText='width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink); margin-bottom:14px;';
+    modal.appendChild(mdLabel); modal.appendChild(mdInput);
+
+    var fuzzyChecks = [];
+    if(fuzzy.length){
+      var h4 = document.createElement('h4'); h4.style.cssText='margin:10px 0 6px; font-size:13px;'; h4.textContent='Unsichere Zuordnungen (bitte prüfen, ggf. abwählen)';
+      modal.appendChild(h4);
+      fuzzy.forEach(function(f){
+        var line = document.createElement('label'); line.style.cssText='display:flex; align-items:center; gap:8px; font-size:12.5px; margin-bottom:4px;';
+        var cb = document.createElement('input'); cb.type='checkbox'; cb.checked = true;
+        fuzzyChecks.push({cb:cb, entry:f});
+        var txt = document.createElement('span'); txt.textContent = '"' + f.row.name + '" (' + f.row.club + ') → ' + f.player.n + ' (' + f.player.c + ')';
+        line.appendChild(cb); line.appendChild(txt);
+        modal.appendChild(line);
+      });
+    }
+    if(unresolved.length){
+      var h5 = document.createElement('h4'); h5.style.cssText='margin:14px 0 6px; font-size:13px; color:var(--sold);'; h5.textContent='Nicht zugeordnet (wird nicht importiert)';
+      modal.appendChild(h5);
+      unresolved.forEach(function(u){
+        var line = document.createElement('div'); line.style.cssText='font-size:12.5px; color:var(--ink-dim); margin-bottom:2px;';
+        line.textContent = '"' + u.row.name + '" (' + u.row.club + ') · ' + u.row.points + ' Punkte';
+        modal.appendChild(line);
+      });
+    }
+
+    var actions2 = document.createElement('div'); actions2.className='modal-actions';
+    var cancelBtn = document.createElement('button'); cancelBtn.className='btn small'; cancelBtn.textContent='Abbrechen';
+    cancelBtn.addEventListener('click', closeModal);
+    var okBtn2 = document.createElement('button'); okBtn2.className='btn small primary'; okBtn2.textContent='Importieren';
+    okBtn2.addEventListener('click', function(){
+      var mdId = String(parseInt(mdInput.value,10) || nextMd);
+      var players = {};
+      exact.forEach(function(r){ players[r.player.id] = rowToMatchdayEntry(r.row); });
+      fuzzyChecks.forEach(function(fc){ if(fc.cb.checked) players[fc.entry.player.id] = rowToMatchdayEntry(fc.entry.row); });
+      STATE.matchdays[mdId] = {importedAt: Date.now(), players: players};
+      closeModal();
+      seasonSelectedMatchday = mdId; seasonSelectedTeamId = null;
+      render(); persist();
+      openInfoModal('Spieltag ' + mdId + ' importiert: ' + Object.keys(players).length + ' Spieler.', 'Import erfolgreich');
+    });
+    actions2.appendChild(cancelBtn); actions2.appendChild(okBtn2);
+    modal.appendChild(actions2);
+
+    backdrop.appendChild(modal);
+    document.getElementById('modalRoot').appendChild(backdrop);
   }
 
   function openBuyModal(playerId, presetTeamId){
@@ -2579,6 +2842,163 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     undoBtn.style.display = (amAdminNow && hasActive) ? '' : 'none';
   }
 
+  // ================= Saison-Ansicht =================
+  var seasonSelectedMatchday = ''; // '' = Gesamt (Saison)
+  var seasonTab = 'table'; // 'table' | 'elf'
+  var seasonSelectedTeamId = null; // set -> team-detail drill-down instead of the table/elf tab
+
+  function fmtCents(v){ return v.toFixed(2).replace('.', ',') + ' €'; }
+
+  function renderSeason(amAdminNow){
+    var mdIds = matchdayIdsSorted();
+    var sel = document.getElementById('seasonMatchdaySelect');
+    var prevVal = seasonSelectedMatchday;
+    sel.innerHTML = '';
+    var optAll = document.createElement('option'); optAll.value=''; optAll.textContent='Gesamt (Saison)'; sel.appendChild(optAll);
+    mdIds.forEach(function(id){
+      var o = document.createElement('option'); o.value=id; o.textContent='Spieltag '+id; sel.appendChild(o);
+    });
+    if(mdIds.indexOf(prevVal)===-1 && prevVal!=='') seasonSelectedMatchday = '';
+    sel.value = seasonSelectedMatchday;
+
+    var importBtn = document.getElementById('seasonImportBtn');
+    importBtn.style.display = amAdminNow ? '' : 'none';
+
+    document.getElementById('seasonTabTableBtn').classList.toggle('primary', seasonTab==='table' && !seasonSelectedTeamId);
+    document.getElementById('seasonTabElfBtn').classList.toggle('primary', seasonTab==='elf' && !seasonSelectedTeamId);
+    document.getElementById('seasonTabRow').style.display = seasonSelectedTeamId ? 'none' : '';
+
+    var content = document.getElementById('seasonContent');
+    content.innerHTML = '';
+    if(mdIds.length===0){
+      var empty = document.createElement('div'); empty.className='history-empty';
+      empty.textContent = amAdminNow
+        ? 'Noch kein Spieltag importiert. Über "Spieltag importieren" den ersten kicker.de-Export hochladen.'
+        : 'Noch kein Spieltag importiert.';
+      content.appendChild(empty);
+      return;
+    }
+    if(seasonSelectedTeamId){
+      var team = STATE.teams.filter(function(t){return t.id===seasonSelectedTeamId;})[0];
+      if(!team){ seasonSelectedTeamId = null; return renderSeason(amAdminNow); }
+      renderSeasonTeamDetail(content, team);
+    } else if(seasonTab==='elf'){
+      renderSeasonElf(content);
+    } else {
+      renderSeasonTable(content);
+    }
+  }
+
+  function seasonBackLink(container, label, onClick){
+    var back = document.createElement('button'); back.className='btn small'; back.style.marginBottom='12px'; back.textContent=label;
+    back.addEventListener('click', onClick);
+    container.appendChild(back);
+  }
+
+  function renderSeasonTable(container){
+    var rows = seasonSelectedMatchday ? matchdayStandings(seasonSelectedMatchday) : seasonStandings();
+    var table = document.createElement('table');
+    var thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>Rang</th><th>Team</th><th class="num-col">Punkte</th><th class="num-col">Strafgeld</th></tr>';
+    var tbody = document.createElement('tbody');
+    rows.forEach(function(r){
+      var tr = document.createElement('tr'); tr.style.cursor='pointer';
+      tr.addEventListener('click', function(){ seasonSelectedTeamId = r.team.id; render(); });
+      var tdRank = document.createElement('td'); tdRank.className='num'; tdRank.textContent = r.rank;
+      var tdTeam = document.createElement('td'); tdTeam.textContent = r.team.name;
+      var tdPts = document.createElement('td'); tdPts.className='num-col num'; tdPts.textContent = (seasonSelectedMatchday ? r.result.total : r.total);
+      var tdFine = document.createElement('td'); tdFine.className='num-col num'; tdFine.style.color='var(--sold)'; tdFine.textContent = fmtCents(r.strafgeld);
+      tr.appendChild(tdRank); tr.appendChild(tdTeam); tr.appendChild(tdPts); tr.appendChild(tdFine);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(thead); table.appendChild(tbody);
+    container.appendChild(table);
+    var hint = document.createElement('div'); hint.style.cssText='font-size:11.5px; color:var(--ink-dim); margin-top:8px;';
+    hint.textContent = 'Klick auf ein Team für den kompletten Kader mit Punkten.' + (seasonSelectedMatchday ? '' : ' Strafgeld: Summe über alle importierten Spieltage (Rang × 40 Cent je Spieltag).');
+    container.appendChild(hint);
+  }
+
+  function renderSeasonElf(container){
+    var entries = allStarEleven(seasonSelectedMatchday || null);
+    if(entries.length===0){
+      var e = document.createElement('div'); e.className='history-empty'; e.textContent='Noch keine gekauften Spieler mit Punkten für diese Auswahl.';
+      container.appendChild(e); return;
+    }
+    var table = document.createElement('table');
+    var thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>#</th><th>Spieler</th><th>Pos.</th><th>Team</th><th class="num-col">Punkte</th></tr>';
+    var tbody = document.createElement('tbody');
+    entries.forEach(function(en, idx){
+      var tr = document.createElement('tr');
+      var tdRank = document.createElement('td'); tdRank.className='num'; tdRank.textContent = idx+1;
+      var tdName = document.createElement('td'); tdName.textContent = en.player.n;
+      var tdPos = document.createElement('td'); var pos=document.createElement('span'); pos.className='pos-tag'; pos.textContent=en.player.p; tdPos.appendChild(pos);
+      var tdTeam = document.createElement('td'); tdTeam.textContent = en.teamName;
+      var tdPts = document.createElement('td'); tdPts.className='num-col num'; tdPts.textContent = en.points;
+      tr.appendChild(tdRank); tr.appendChild(tdName); tr.appendChild(tdPos); tr.appendChild(tdTeam); tr.appendChild(tdPts);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(thead); table.appendChild(tbody);
+    container.appendChild(table);
+  }
+
+  function renderSeasonTeamDetail(container, team){
+    seasonBackLink(container, '← Zurück zur Tabelle', function(){ seasonSelectedTeamId = null; render(); });
+    var h = document.createElement('h3'); h.style.margin='0 0 4px'; h.textContent = team.name;
+    container.appendChild(h);
+    if(!seasonSelectedMatchday){
+      var mdIds = matchdayIdsSorted();
+      var total = mdIds.reduce(function(s,id){ return s + teamMatchdayResult(team,id).total; }, 0);
+      var sub = document.createElement('div'); sub.className='modal-sub'; sub.style.marginBottom='12px';
+      sub.textContent = 'Saison-Gesamtpunkte: ' + total + ' (über ' + mdIds.length + ' Spieltag(e))';
+      container.appendChild(sub);
+      var table = document.createElement('table');
+      table.innerHTML = '<thead><tr><th>Spieltag</th><th class="num-col">Punkte</th></tr></thead>';
+      var tbody = document.createElement('tbody');
+      mdIds.forEach(function(id){
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>Spieltag '+id+'</td>';
+        var td = document.createElement('td'); td.className='num-col num'; td.textContent = teamMatchdayResult(team,id).total;
+        tr.appendChild(td); tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      container.appendChild(table);
+      return;
+    }
+    var result = teamMatchdayResult(team, seasonSelectedMatchday);
+    if(!result.hasFormation){
+      var warn = document.createElement('div'); warn.style.cssText='font-size:12.5px; color:var(--sold); font-weight:600; margin-bottom:10px;';
+      warn.textContent = 'Für dieses Team ist keine Formation gewählt — es zählt aktuell 0 Punkte. Formation auf der Hauptseite festlegen.';
+      container.appendChild(warn);
+    }
+    var sub2 = document.createElement('div'); sub2.className='modal-sub'; sub2.style.marginBottom='12px';
+    sub2.textContent = 'Spieltag ' + seasonSelectedMatchday + ' · Formation ' + (team.formation||'–') + ' · Gesamt: ' + result.total + ' Punkte';
+    container.appendChild(sub2);
+
+    function buildRosterTable(title, entries, counted){
+      if(!entries.length) return;
+      var h4 = document.createElement('h4'); h4.style.cssText='margin:14px 0 6px; font-size:13px;'; h4.textContent = title;
+      container.appendChild(h4);
+      var table = document.createElement('table');
+      table.innerHTML = '<thead><tr><th>Spieler</th><th>Pos.</th><th class="num-col">Punkte</th><th>Status</th></tr></thead>';
+      var tbody = document.createElement('tbody');
+      entries.forEach(function(e){
+        var tr = document.createElement('tr'); if(!counted) tr.style.opacity='0.6';
+        var tdName = document.createElement('td'); tdName.textContent = e.player.n;
+        var tdPos = document.createElement('td'); var pos=document.createElement('span'); pos.className='pos-tag'; pos.textContent=e.player.p; tdPos.appendChild(pos);
+        var tdPts = document.createElement('td'); tdPts.className='num-col num'; tdPts.textContent = e.points;
+        var tdStatus = document.createElement('td'); tdStatus.style.fontSize='11.5px'; tdStatus.style.color='var(--ink-dim)';
+        tdStatus.textContent = e.status==='start' ? 'Startelf' : e.status==='bench' ? 'Eingewechselt' : 'nicht im Kader-Spiel';
+        tr.appendChild(tdName); tr.appendChild(tdPos); tr.appendChild(tdPts); tr.appendChild(tdStatus);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+    buildRosterTable('Top-Elf (gewertet)', result.starters, true);
+    buildRosterTable('Rest des Kaders (nicht gewertet)', result.bench, false);
+  }
+
   function render(){
     try{
       renderImpl();
@@ -2620,6 +3040,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     updateSortHeaders();
     var amAdminNow = isAdmin();
     renderHistory(amAdminNow && !normalChangesLocked());
+    renderSeason(amAdminNow);
 
     // teams grid
     var grid = document.getElementById('teamsGrid');
@@ -2716,6 +3137,42 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   });
   document.getElementById('backToMainBtn').addEventListener('click', function(){
     currentView = 'main'; render();
+  });
+
+  document.getElementById('openSeasonBtn').addEventListener('click', function(){
+    currentView = 'season'; seasonSelectedTeamId = null; render();
+  });
+  document.getElementById('backToMainFromSeasonBtn').addEventListener('click', function(){
+    currentView = 'main'; render();
+  });
+  document.getElementById('seasonMatchdaySelect').addEventListener('change', function(ev){
+    seasonSelectedMatchday = ev.target.value; seasonSelectedTeamId = null; render();
+  });
+  document.getElementById('seasonTabTableBtn').addEventListener('click', function(){
+    seasonTab = 'table'; seasonSelectedTeamId = null; render();
+  });
+  document.getElementById('seasonTabElfBtn').addEventListener('click', function(){
+    seasonTab = 'elf'; seasonSelectedTeamId = null; render();
+  });
+  document.getElementById('seasonImportBtn').addEventListener('click', function(){
+    if(!isAdmin()) return;
+    document.getElementById('seasonImportFile').click();
+  });
+  document.getElementById('seasonImportFile').addEventListener('change', function(ev){
+    var file = ev.target.files && ev.target.files[0];
+    ev.target.value = '';
+    if(!file || !isAdmin()) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var rows = parseMatchdayCsv(String(reader.result));
+        if(!rows.length){ openInfoModal('Die Datei enthält keine Spielerzeilen.', 'Import fehlgeschlagen'); return; }
+        openMatchdayImportModal(rows);
+      } catch(e){
+        openInfoModal('Import fehlgeschlagen: ' + (e && e.message || e), 'Import fehlgeschlagen');
+      }
+    };
+    reader.readAsText(file, 'utf-8');
   });
 
   document.getElementById('undoLastBtn').addEventListener('click', function(){
