@@ -594,6 +594,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
           <select id="seasonMatchdaySelect"></select>
           <button class="btn small" id="seasonImportBtn" style="display:none;">Spieltag importieren</button>
+          <button class="btn small" id="scraperImportBtn">⬇ Von kicker.de laden</button>
           <input type="file" id="seasonImportFile" accept=".csv,text/csv" style="display:none;">
           <button class="btn small primary" id="backToMainFromSeasonBtn">← Zurück zur Hauptseite</button>
         </div>
@@ -3445,6 +3446,71 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
   document.getElementById('undoLastBtn').addEventListener('click', function(){
     undoLastSale();
+  });
+
+  document.getElementById('scraperImportBtn').addEventListener('click', function(){
+    if(!isAdmin()) return;
+    var existingMd = matchdayIdsSorted().map(Number);
+    var nextMd = existingMd.length ? Math.max.apply(null, existingMd) + 1 : 1;
+
+    var backdrop = document.createElement('div'); backdrop.className='modal-backdrop';
+    backdrop.addEventListener('click', function(ev){ if(ev.target===backdrop) closeModal(); });
+    var modal = document.createElement('div'); modal.className='modal'; modal.style.maxWidth='420px';
+    var h2 = document.createElement('h3'); h2.textContent = 'Von kicker.de laden';
+    var sub = document.createElement('div'); sub.className='modal-sub';
+    sub.textContent = 'server.py muss lokal laufen (python server.py).';
+    modal.appendChild(h2); modal.appendChild(sub);
+
+    var mdLabel = document.createElement('label'); mdLabel.textContent = 'Spieltag-Nummer';
+    var mdInput = document.createElement('input'); mdInput.type='number'; mdInput.min='1'; mdInput.max='34'; mdInput.value=nextMd;
+    mdInput.style.cssText='width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink); margin-bottom:8px;';
+
+    var saisonLabel = document.createElement('label'); saisonLabel.textContent = 'Saison';
+    var saisonInput = document.createElement('input'); saisonInput.type='text'; saisonInput.value='2026-27';
+    saisonInput.style.cssText='width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink); margin-bottom:14px;';
+
+    var statusDiv = document.createElement('div');
+    statusDiv.style.cssText='font-size:12.5px; color:var(--ink-dim); min-height:20px; margin-bottom:8px;';
+
+    modal.appendChild(mdLabel); modal.appendChild(mdInput);
+    modal.appendChild(saisonLabel); modal.appendChild(saisonInput);
+    modal.appendChild(statusDiv);
+
+    var actions = document.createElement('div'); actions.className='modal-actions';
+    var cancelBtn = document.createElement('button'); cancelBtn.className='btn small'; cancelBtn.textContent='Abbrechen';
+    cancelBtn.addEventListener('click', closeModal);
+    var loadBtn = document.createElement('button'); loadBtn.className='btn small primary'; loadBtn.textContent='Laden';
+    loadBtn.addEventListener('click', function(){
+      var spieltag = parseInt(mdInput.value, 10);
+      var saison = saisonInput.value.trim();
+      if(!spieltag || spieltag < 1 || spieltag > 34){ statusDiv.textContent='Ungültiger Spieltag.'; return; }
+      loadBtn.disabled = true; cancelBtn.disabled = true;
+      statusDiv.textContent = 'Scraper läuft… (kann 1–3 Minuten dauern)';
+      var url = 'http://localhost:7431/scrape?spieltag=' + spieltag + '&saison=' + encodeURIComponent(saison);
+      fetch(url)
+        .then(function(r){
+          if(!r.ok) return r.text().then(function(t){ throw new Error(t || r.statusText); });
+          return r.text();
+        })
+        .then(function(csvText){
+          closeModal();
+          try{
+            var rows = parseMatchdayCsv(csvText);
+            if(!rows.length){ openInfoModal('Keine Spielerzeilen in den Scraped-Daten.', 'Import fehlgeschlagen'); return; }
+            openMatchdayImportModal(rows);
+          } catch(e){
+            openInfoModal('Fehler beim Verarbeiten: ' + (e && e.message || e), 'Import fehlgeschlagen');
+          }
+        })
+        .catch(function(e){
+          loadBtn.disabled = false; cancelBtn.disabled = false;
+          statusDiv.textContent = 'Fehler: ' + (e && e.message || e) + ' — Läuft server.py?';
+        });
+    });
+    actions.appendChild(cancelBtn); actions.appendChild(loadBtn);
+    modal.appendChild(actions);
+    backdrop.appendChild(modal);
+    document.getElementById('modalRoot').appendChild(backdrop);
   });
 
   document.getElementById('resetBtn').addEventListener('click', function(){
