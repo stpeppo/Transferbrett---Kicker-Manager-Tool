@@ -280,7 +280,7 @@ def main():
     parser = argparse.ArgumentParser(description="kicker.de Spieltag-Scraper")
     parser.add_argument("--spieltag", type=int, required=True)
     parser.add_argument("--saison", default="2025-26")
-    parser.add_argument("--interactive", default=None,
+    parser.add_argument("--interactive", default="players-se-k00012026.csv",
                         help="Pfad zur Interactive-Spielerliste (für Positionen)")
     parser.add_argument("--output", default=None)
     parser.add_argument("--headless", action="store_true", default=False,
