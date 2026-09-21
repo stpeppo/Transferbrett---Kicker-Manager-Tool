@@ -254,10 +254,19 @@ def get_game_links(page, saison, spieltag):
             if full not in links:
                 links.append(full)
 
-    # Debug: zeige alle gefundenen hrefs die 'bundesliga' enthalten
+    # Debug: zeige alle hrefs auf der Seite
     if not links:
-        bl_hrefs = [a["href"] for a in soup.find_all("a", href=True) if "bundesliga" in a["href"]]
-        print(f"  DEBUG: {len(bl_hrefs)} bundesliga-hrefs gefunden: {bl_hrefs[:5]}")
+        all_hrefs = [a["href"] for a in soup.find_all("a", href=True)]
+        print(f"  DEBUG: {len(all_hrefs)} hrefs total auf der Seite")
+        print(f"  DEBUG: erste 10 hrefs: {all_hrefs[:10]}")
+        # Playwright: länger warten und dann nochmal versuchen
+        import time as _time
+        _time.sleep(4)
+        html2 = page.content()
+        soup2 = BeautifulSoup(html2, "html.parser")
+        all_hrefs2 = [a["href"] for a in soup2.find_all("a", href=True)]
+        bl2 = [h for h in all_hrefs2 if "bundesliga" in h or "schema" in h or "analyse" in h or "gegen" in h]
+        print(f"  DEBUG nach 4s Zusatzwait: {len(all_hrefs2)} hrefs total, davon relevant: {bl2[:10]}")
 
     print(f"  → {len(links)} Spiele gefunden")
     return links
