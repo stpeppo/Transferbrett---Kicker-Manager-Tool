@@ -1,0 +1,304 @@
+Spieltag;Verein;Status;Spieler;Punkte;RoteKarte;GelbRoteKarte;Vorlagen;Tore;SpielerDesSpiels
+1;1. FC Union Berlin;Start;Raab ;4;0;0;0;0;0
+1;1. FC Union Berlin;Start;Querfeld;11;0;0;1;1;0
+1;1. FC Union Berlin;Start;Juranovic;12;0;0;2;0;0
+1;1. FC Union Berlin;Start;van den Bosch;4;0;0;0;0;0
+1;1. FC Union Berlin;Start;Rothe;4;0;0;0;0;0
+1;1. FC Union Berlin;Start;Kemlein;2;0;0;0;0;0
+1;1. FC Union Berlin;Start;Khedira;4;0;0;0;0;0
+1;1. FC Union Berlin;Start;Aebischer;2;0;0;0;0;0
+1;1. FC Union Berlin;Start;Schäfer;0;0;0;0;0;0
+1;1. FC Union Berlin;Start;Ljubicic;0;0;0;0;0;0
+1;1. FC Union Berlin;Start;Latte Lath;11;0;0;0;1;0
+1;1. FC Union Berlin;Bank;Jeong;2;0;0;0;0;0
+1;1. FC Union Berlin;Bank;Skarke;12;0;0;0;1;0
+1;1. FC Union Berlin;Bank;Burcu;0;0;0;0;0;0
+1;1. FC Union Berlin;Bank;Haberer;2;0;0;0;0;0
+1;1. FC Union Berlin;Bank;Köhn;2;0;0;0;0;0
+1;1. FC Union Berlin;Teampunkte;;72;;;;;
+1;VfB Stuttgart;Start;Bredlow;8;0;0;0;0;0
+1;VfB Stuttgart;Start;Hendriks;-2;0;0;0;0;0
+1;VfB Stuttgart;Start;Mittelstädt;2;0;0;0;0;0
+1;VfB Stuttgart;Start;Chabot;2;0;0;0;0;0
+1;VfB Stuttgart;Start;Jeltsch;2;0;0;0;0;0
+1;VfB Stuttgart;Start;Vagnoman;7;0;0;0;1;0
+1;VfB Stuttgart;Start;Stiller;0;0;0;0;0;0
+1;VfB Stuttgart;Start;Prömel;2;0;0;0;0;0
+1;VfB Stuttgart;Start;Tomas;2;0;0;0;0;0
+1;VfB Stuttgart;Start;Undav;-2;0;0;0;0;0
+1;VfB Stuttgart;Start;Pejcinovic;0;0;0;0;0;0
+1;VfB Stuttgart;Bank;Leweling;0;0;0;0;0;0
+1;VfB Stuttgart;Bank;Demirovic;-2;0;0;0;0;0
+1;VfB Stuttgart;Bank;El Khannouss;2;0;0;0;0;0
+1;VfB Stuttgart;Bank;Stergiou;2;0;0;0;0;0
+1;VfB Stuttgart;Bank;Chema;2;0;0;0;0;0
+1;VfB Stuttgart;Teampunkte;;25;;;;;
+1;FC Schalke 04;Start;Karius;6;0;0;0;0;0
+1;FC Schalke 04;Start;Kurucay;6;0;0;0;0;0
+1;FC Schalke 04;Start;Katic;2;0;0;0;0;0
+1;FC Schalke 04;Start;T. Becker;2;0;0;0;0;0
+1;FC Schalke 04;Start;V. Becker;2;0;0;0;0;0
+1;FC Schalke 04;Start;Schallenberg;-8;1;0;0;0;0
+1;FC Schalke 04;Start;Ljubicic;2;0;0;0;0;0
+1;FC Schalke 04;Start;El-Faouzi;2;0;0;0;0;0
+1;FC Schalke 04;Start;Sylla;0;0;0;0;0;0
+1;FC Schalke 04;Start;Aouchiche;2;0;0;0;0;0
+1;FC Schalke 04;Start;Adamu;0;0;0;0;0;0
+1;FC Schalke 04;Bank;Ayhan;2;0;0;0;0;0
+1;FC Schalke 04;Bank;Dina Ebimbe;0;0;0;0;0;0
+1;FC Schalke 04;Bank;Wöber;-4;0;0;0;0;0
+1;FC Schalke 04;Bank;Gosens;-2;0;0;0;0;0
+1;FC Schalke 04;Bank;Dzeko;2;0;0;0;0;0
+1;FC Schalke 04;Teampunkte;;14;;;;;
+1;SC Freiburg;Start;Backhaus;2;0;0;0;0;0
+1;SC Freiburg;Start;Lienhart;6;0;0;0;0;0
+1;SC Freiburg;Start;Ginter;8;0;0;0;1;0
+1;SC Freiburg;Start;Kübler;8;0;0;0;0;0
+1;SC Freiburg;Start;Makengo;4;0;0;0;0;0
+1;SC Freiburg;Start;Eggestein;8;0;0;0;0;0
+1;SC Freiburg;Start;Engelhardt;6;0;0;0;0;0
+1;SC Freiburg;Start;Suzuki;29;0;0;0;3;1
+1;SC Freiburg;Start;Beste;10;0;0;0;1;0
+1;SC Freiburg;Start;Scherhant;10;0;0;0;1;0
+1;SC Freiburg;Start;Matanovic;17;0;0;1;1;0
+1;SC Freiburg;Bank;Höler;2;0;0;0;0;0
+1;SC Freiburg;Bank;Rosenfelder;2;0;0;0;0;0
+1;SC Freiburg;Bank;Treu;2;0;0;0;0;0
+1;SC Freiburg;Bank;Goto;2;0;0;0;0;0
+1;SC Freiburg;Bank;Irié;0;0;0;0;0;0
+1;SC Freiburg;Teampunkte;;116;;;;;
+1;FC Augsburg;Start;Dahmen;10;0;0;0;0;0
+1;FC Augsburg;Start;Matsima;8;0;0;0;0;0
+1;FC Augsburg;Start;Brackelmann;4;0;0;0;0;0
+1;FC Augsburg;Start;Behrens;6;0;0;0;0;0
+1;FC Augsburg;Start;Banks;8;0;0;0;0;0
+1;FC Augsburg;Start;Rieder;12;0;0;1;0;0
+1;FC Augsburg;Start;A. Kade;21;0;0;1;1;1
+1;FC Augsburg;Start;Fellhauer;4;0;0;0;0;0
+1;FC Augsburg;Start;M. Wolf;6;0;0;0;0;0
+1;FC Augsburg;Start;Gregoritsch;11;0;0;0;1;0
+1;FC Augsburg;Start;Massengo;6;0;0;0;0;0
+1;FC Augsburg;Bank;Kömür;2;0;0;0;0;0
+1;FC Augsburg;Bank;Ribeiro;5;0;0;1;0;0
+1;FC Augsburg;Bank;Keitel;2;0;0;0;0;0
+1;FC Augsburg;Bank;Gouweleeuw;2;0;0;0;0;0
+1;FC Augsburg;Bank;Woo-Seol;4;0;0;1;0;0
+1;FC Augsburg;Teampunkte;;111;;;;;
+1;RB Leipzig;Start;Vandevoordt;12;0;0;0;0;0
+1;RB Leipzig;Start;Raum;8;0;0;0;0;0
+1;RB Leipzig;Start;Lukeba;6;0;0;0;0;0
+1;RB Leipzig;Start;Orban;6;0;0;0;0;0
+1;RB Leipzig;Start;Seiwald;6;0;0;0;0;0
+1;RB Leipzig;Start;Baku;13;0;0;1;0;0
+1;RB Leipzig;Start;Banzuzi;6;0;0;0;0;0
+1;RB Leipzig;Start;Reitz;14;0;0;1;0;0
+1;RB Leipzig;Start;Nusa;18;0;0;0;1;1
+1;RB Leipzig;Start;Gruda;8;0;0;0;0;0
+1;RB Leipzig;Start;Gomis;16;0;0;0;2;0
+1;RB Leipzig;Bank;Nkunku;8;0;0;1;0;0
+1;RB Leipzig;Bank;Bakayoko;2;0;0;0;0;0
+1;RB Leipzig;Bank;Henrichs;2;0;0;0;0;0
+1;RB Leipzig;Bank;Vermeeren;2;0;0;0;0;0
+1;RB Leipzig;Bank;Harder;2;0;0;0;0;0
+1;RB Leipzig;Teampunkte;;129;;;;;
+1;1. FC Köln;Start;Schwäbe;10;0;0;0;0;0
+1;1. FC Köln;Start;Simpson-Pusey;0;0;0;0;0;0
+1;1. FC Köln;Start;Mensah;8;0;0;0;0;0
+1;1. FC Köln;Start;Lochoshvili;8;0;0;0;0;0
+1;1. FC Köln;Start;Castro-Montes;6;0;0;0;0;0
+1;1. FC Köln;Start;Krauß;4;0;0;0;0;0
+1;1. FC Köln;Start;Johannesson;10;0;0;1;0;0
+1;1. FC Köln;Start;Okon-Engstler;2;0;0;0;0;0
+1;1. FC Köln;Start;Thielmann;2;0;0;0;0;0
+1;1. FC Köln;Start;Ache;2;0;0;0;0;0
+1;1. FC Köln;Start;S. El Mala;10;0;0;0;1;0
+1;1. FC Köln;Bank;Maina;8;0;0;1;0;0
+1;1. FC Köln;Bank;Skhiri;0;0;0;0;0;0
+1;1. FC Köln;Bank;Dallinga;21;0;0;0;2;1
+1;1. FC Köln;Bank;Bülter;2;0;0;0;0;0
+1;1. FC Köln;Bank;Schmied;2;0;0;0;0;0
+1;1. FC Köln;Teampunkte;;95;;;;;
+1;Borussia Dortmund;Start;Kobel;10;0;0;0;0;0
+1;Borussia Dortmund;Start;Anton;4;0;0;0;0;0
+1;Borussia Dortmund;Start;Gadou;4;0;0;0;0;0
+1;Borussia Dortmund;Start;Ryerson;4;0;0;0;0;0
+1;Borussia Dortmund;Start;Svensson;8;0;0;0;0;0
+1;Borussia Dortmund;Start;Nmecha;4;0;0;0;0;0
+1;Borussia Dortmund;Start;Konstantelias;14;0;0;0;1;0
+1;Borussia Dortmund;Start;Bellingham;10;0;0;0;0;0
+1;Borussia Dortmund;Start;Guirassy;11;0;0;0;1;0
+1;Borussia Dortmund;Start;Beier;8;0;0;1;0;0
+1;Borussia Dortmund;Start;Karetsas;17;0;0;1;0;1
+1;Borussia Dortmund;Bank;Sabitzer;4;0;0;0;0;0
+1;Borussia Dortmund;Bank;Mane;2;0;0;0;0;0
+1;Borussia Dortmund;Bank;J. Veerman;2;0;0;0;0;0
+1;Borussia Dortmund;Bank;Kaua Prates;2;0;0;0;0;0
+1;Borussia Dortmund;Bank;Inacio;2;0;1;0;0;0
+1;Borussia Dortmund;Teampunkte;;106;;;;;
+1;Hamburger SV;Start;Heuer Fernandez;10;0;0;0;0;0
+1;Hamburger SV;Start;Bornauw;2;0;0;0;0;0
+1;Hamburger SV;Start;Capaldo;-2;0;0;0;0;0
+1;Hamburger SV;Start;Torunarigha;0;0;0;0;0;0
+1;Hamburger SV;Start;Lemke;4;0;0;0;0;0
+1;Hamburger SV;Start;Remberg;-2;0;0;0;0;0
+1;Hamburger SV;Start;Sambi Lokonga;-2;0;0;0;0;0
+1;Hamburger SV;Start;Jatta;0;0;0;0;0;0
+1;Hamburger SV;Start;Grönbaek;4;0;0;0;0;0
+1;Hamburger SV;Start;Daka;-2;0;0;0;0;0
+1;Hamburger SV;Start;Adeline;-2;0;0;0;0;0
+1;Hamburger SV;Bank;Stange;2;0;0;0;0;0
+1;Hamburger SV;Bank;Moffi;2;0;0;0;0;0
+1;Hamburger SV;Bank;Nadir;2;0;0;0;0;0
+1;Hamburger SV;Bank;Philippe;2;0;0;0;0;0
+1;Hamburger SV;Bank;Poulsen;2;0;0;0;0;0
+1;Hamburger SV;Teampunkte;;20;;;;;
+1;TSG Hoffenheim;Start;Baumann;10;0;0;0;0;0
+1;TSG Hoffenheim;Start;Kabak;13;0;0;0;1;0
+1;TSG Hoffenheim;Start;Hajdari;2;0;0;0;0;0
+1;TSG Hoffenheim;Start;Coufal;8;0;0;1;0;0
+1;TSG Hoffenheim;Start;Bernado;2;0;0;0;0;0
+1;TSG Hoffenheim;Start;Avdullahu;-2;0;0;0;0;0
+1;TSG Hoffenheim;Start;Burger;4;0;0;0;0;0
+1;TSG Hoffenheim;Start;Daghim;11;0;0;0;1;0
+1;TSG Hoffenheim;Start;Wimmer;6;0;0;0;0;0
+1;TSG Hoffenheim;Start;Hlozek;2;0;0;0;0;0
+1;TSG Hoffenheim;Start;Conté;12;0;0;1;0;0
+1;TSG Hoffenheim;Bank;Moerstedt;-4;0;0;0;0;0
+1;TSG Hoffenheim;Bank;Hranac;0;0;0;0;0;0
+1;TSG Hoffenheim;Bank;De Cat;2;0;0;0;0;0
+1;TSG Hoffenheim;Bank;Kramaric;2;0;0;0;0;0
+1;TSG Hoffenheim;Bank;M. Rots;2;0;0;0;0;0
+1;TSG Hoffenheim;Teampunkte;;70;;;;;
+1;Borussia Mönchengladbach;Start;Nicolas;10;0;0;0;0;0
+1;Borussia Mönchengladbach;Start;Itakura;0;0;0;0;0;0
+1;Borussia Mönchengladbach;Start;Diks;2;0;0;0;0;0
+1;Borussia Mönchengladbach;Start;Hashioka;-2;0;0;0;0;0
+1;Borussia Mönchengladbach;Start;Ullrich;0;0;0;0;0;0
+1;Borussia Mönchengladbach;Start;Sander;-2;0;0;0;0;0
+1;Borussia Mönchengladbach;Start;Stöger;-2;0;0;0;0;0
+1;Borussia Mönchengladbach;Start;Hack;-2;0;0;0;0;0
+1;Borussia Mönchengladbach;Start;Bolin;2;0;0;0;0;0
+1;Borussia Mönchengladbach;Start;Kleindienst;0;0;0;0;0;0
+1;Borussia Mönchengladbach;Start;Mohya;2;0;0;0;0;0
+1;Borussia Mönchengladbach;Bank;Lidberg;0;0;0;0;0;0
+1;Borussia Mönchengladbach;Bank;Honorat;2;0;0;0;0;0
+1;Borussia Mönchengladbach;Bank;Nguefack;0;0;0;0;0;0
+1;Borussia Mönchengladbach;Bank;Herold;0;0;0;0;0;0
+1;Borussia Mönchengladbach;Bank;Scally;2;0;0;0;0;0
+1;Borussia Mönchengladbach;Teampunkte;;12;;;;;
+1;SV Werder Bremen;Start;Hein;2;0;0;0;0;0
+1;SV Werder Bremen;Start;Deman;2;0;0;0;0;0
+1;SV Werder Bremen;Start;Friedl;-2;0;0;0;0;0
+1;SV Werder Bremen;Start;Pieper;-2;0;0;0;0;0
+1;SV Werder Bremen;Start;Schmetgens;2;0;0;0;0;0
+1;SV Werder Bremen;Start;Lynen;2;0;0;0;0;0
+1;SV Werder Bremen;Start;Chuki;0;0;0;0;0;0
+1;SV Werder Bremen;Start;Reis;0;0;0;0;0;0
+1;SV Werder Bremen;Start;Njinmah;-2;0;0;0;0;0
+1;SV Werder Bremen;Start;Füllkrug;-2;0;0;0;0;0
+1;SV Werder Bremen;Start;Grüll;2;0;0;1;0;0
+1;SV Werder Bremen;Bank;Stalmach;4;0;0;1;0;0
+1;SV Werder Bremen;Bank;Musah;-2;0;0;0;0;0
+1;SV Werder Bremen;Bank;Itten;-2;0;0;0;0;0
+1;SV Werder Bremen;Bank;Covic;2;0;0;0;0;0
+1;SV Werder Bremen;Bank;Dinkci;2;0;0;0;0;0
+1;SV Werder Bremen;Teampunkte;;6;;;;;
+1;1. FSV Mainz 05;Start;Zentner;8;0;0;0;0;0
+1;1. FSV Mainz 05;Start;Caci;4;0;0;0;0;0
+1;1. FSV Mainz 05;Start;da Costa;8;0;0;0;0;0
+1;1. FSV Mainz 05;Start;Gruber;6;0;0;0;0;0
+1;1. FSV Mainz 05;Start;Kohr;4;0;0;0;0;0
+1;1. FSV Mainz 05;Start;Mwene;4;0;0;0;0;0
+1;1. FSV Mainz 05;Start;Sano;6;0;0;0;0;0
+1;1. FSV Mainz 05;Start;Lee;2;0;0;0;0;0
+1;1. FSV Mainz 05;Start;Amiri;4;0;0;0;0;0
+1;1. FSV Mainz 05;Start;Tietz;0;0;0;0;0;0
+1;1. FSV Mainz 05;Start;Becker;2;0;0;0;0;0
+1;1. FSV Mainz 05;Bank;Ruoppi;2;0;0;0;0;0
+1;1. FSV Mainz 05;Bank;Königsdörffer;2;0;0;0;0;0
+1;1. FSV Mainz 05;Bank;Widmer;2;0;0;0;0;0
+1;1. FSV Mainz 05;Bank;Potulski;2;0;0;0;0;0
+1;1. FSV Mainz 05;Teampunkte;;56;;;;;
+1;FC Bayern München;Start;Neuer;6;0;0;0;0;0
+1;FC Bayern München;Start;Davies;8;0;0;1;0;0
+1;FC Bayern München;Start;M.-J. Kim;8;0;0;0;0;0
+1;FC Bayern München;Start;Upamecano;15;0;0;0;1;0
+1;FC Bayern München;Start;Laimer;6;0;0;0;0;0
+1;FC Bayern München;Start;Pavlovic;14;0;0;0;1;0
+1;FC Bayern München;Start;Kimmich;14;0;0;0;2;0
+1;FC Bayern München;Start;Brown;4;0;0;0;0;0
+1;FC Bayern München;Start;Olise;18;0;0;1;0;1
+1;FC Bayern München;Start;Luis Diaz;9;0;0;1;0;0
+1;FC Bayern München;Start;Kane;6;0;0;0;0;0
+1;FC Bayern München;Bank;Stanisic;2;0;0;0;0;0
+1;FC Bayern München;Bank;Saibari;12;0;0;0;2;0
+1;FC Bayern München;Bank;Tah;2;0;0;0;0;0
+1;FC Bayern München;Bank;Bischof;2;0;0;0;0;0
+1;FC Bayern München;Bank;Karl;2;0;0;0;0;0
+1;FC Bayern München;Teampunkte;;128;;;;;
+1;SC Paderborn 07;Start;Noll;15;0;0;0;0;1
+1;SC Paderborn 07;Start;Obermair;2;0;0;0;0;0
+1;SC Paderborn 07;Start;Hansen;6;0;0;0;0;0
+1;SC Paderborn 07;Start;ter Horst;4;0;0;0;0;0
+1;SC Paderborn 07;Start;Scheller;4;0;0;0;0;0
+1;SC Paderborn 07;Start;Curda;8;0;0;0;0;0
+1;SC Paderborn 07;Start;Castenada;6;0;0;0;0;0
+1;SC Paderborn 07;Start;Vidovic;2;0;0;0;0;0
+1;SC Paderborn 07;Start;Ulrich;0;0;0;0;0;0
+1;SC Paderborn 07;Start;Marino;0;0;0;0;0;0
+1;SC Paderborn 07;Start;Pieringer;4;0;0;0;0;0
+1;SC Paderborn 07;Bank;Tigges;2;0;0;0;0;0
+1;SC Paderborn 07;Bank;Baack;2;0;0;0;0;0
+1;SC Paderborn 07;Bank;Sticker;2;0;0;0;0;0
+1;SC Paderborn 07;Bank;Lippmann;2;0;0;0;0;0
+1;SC Paderborn 07;Teampunkte;;59;;;;;
+1;Eintracht Frankfurt;Start;Atubolu;10;0;0;0;0;0
+1;Eintracht Frankfurt;Start;R. Koch;4;0;0;0;0;0
+1;Eintracht Frankfurt;Start;Kosugi;2;0;0;0;0;0
+1;Eintracht Frankfurt;Start;Maluze;4;0;0;0;0;0
+1;Eintracht Frankfurt;Start;Baum;6;0;0;1;0;0
+1;Eintracht Frankfurt;Start;Chaibi;2;0;0;0;0;0
+1;Eintracht Frankfurt;Start;Onyedika;0;0;0;0;0;0
+1;Eintracht Frankfurt;Start;Uzun;4;0;0;0;0;0
+1;Eintracht Frankfurt;Start;A. Echghouyab;4;0;0;0;0;0
+1;Eintracht Frankfurt;Start;Ebnoutalib;26;0;0;0;3;1
+1;Eintracht Frankfurt;Start;Burkardt;2;0;0;0;0;0
+1;Eintracht Frankfurt;Bank;Pimpong;2;0;0;0;0;0
+1;Eintracht Frankfurt;Bank;Höjlund;2;0;0;0;0;0
+1;Eintracht Frankfurt;Bank;Arrhov;2;0;0;0;0;0
+1;Eintracht Frankfurt;Bank;Otavio;2;0;0;0;0;0
+1;Eintracht Frankfurt;Teampunkte;;72;;;;;
+1;SV 07 Elversberg;Start;Kristof;6;0;0;0;0;0
+1;SV 07 Elversberg;Start;La. Günther;2;0;0;0;0;0
+1;SV 07 Elversberg;Start;Pinckert;4;0;0;0;0;0
+1;SV 07 Elversberg;Start;Gyamerah;8;0;0;0;0;0
+1;SV 07 Elversberg;Start;Rohr;6;0;0;0;0;0
+1;SV 07 Elversberg;Start;Onyeka;6;0;0;1;0;0
+1;SV 07 Elversberg;Start;Poreba;4;0;0;0;0;0
+1;SV 07 Elversberg;Start;Petkov;23;0;0;1;2;1
+1;SV 07 Elversberg;Start;Keidel;4;0;0;0;0;0
+1;SV 07 Elversberg;Start;Campbell;12;0;0;1;0;0
+1;SV 07 Elversberg;Start;Mokwa;11;0;0;1;0;0
+1;SV 07 Elversberg;Bank;Darvich;0;0;0;0;0;0
+1;SV 07 Elversberg;Bank;Krattenmacher;-2;0;0;0;0;0
+1;SV 07 Elversberg;Bank;Schnellbacher;2;0;0;0;0;0
+1;SV 07 Elversberg;Bank;Sirch;2;0;0;0;0;0
+1;SV 07 Elversberg;Bank;Le Joncour;2;0;0;0;0;0
+1;SV 07 Elversberg;Teampunkte;;90;;;;;
+1;Bayer 04 Leverkusen;Start;Flekken;6;0;0;0;0;0
+1;Bayer 04 Leverkusen;Start;Tapsoba;-6;0;0;0;0;0
+1;Bayer 04 Leverkusen;Start;Badé;-2;0;0;0;0;0
+1;Bayer 04 Leverkusen;Start;Vazquez;-4;0;0;0;0;0
+1;Bayer 04 Leverkusen;Start;Miguel;6;0;0;0;0;0
+1;Bayer 04 Leverkusen;Start;Aleix Garcia;0;0;0;0;0;0
+1;Bayer 04 Leverkusen;Start;Maza;8;0;0;1;0;0
+1;Bayer 04 Leverkusen;Start;Tillmann;-2;0;0;0;0;0
+1;Bayer 04 Leverkusen;Start;Schick;5;0;0;0;1;0
+1;Bayer 04 Leverkusen;Start;Fernandez;0;0;0;0;0;0
+1;Bayer 04 Leverkusen;Start;Moreira;0;0;0;0;0;0
+1;Bayer 04 Leverkusen;Bank;Quansah;6;0;0;0;0;0
+1;Bayer 04 Leverkusen;Bank;Medina;4;0;0;0;0;0
+1;Bayer 04 Leverkusen;Bank;Kofane;7;0;0;0;1;0
+1;Bayer 04 Leverkusen;Bank;Hofmann;4;0;0;0;0;0
+1;Bayer 04 Leverkusen;Bank;Boniface;4;0;0;1;0;0
+1;Bayer 04 Leverkusen;Teampunkte;;36;;;;;
