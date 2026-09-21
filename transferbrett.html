@@ -3875,7 +3875,8 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     });
     actions.appendChild(cancelBtn); actions.appendChild(loadBtn);
     modal.appendChild(actions);
-    document.body.appendChild(backdrop); document.body.appendChild(modal);
+    var root = document.getElementById('modalRoot');
+    root.appendChild(backdrop); root.appendChild(modal);
   });
 
   document.getElementById('undoLastBtn').addEventListener('click', function(){
