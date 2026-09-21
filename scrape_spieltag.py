@@ -233,26 +233,31 @@ def scrape_game(page, url, player_positions):
 def get_game_links(page, saison, spieltag):
     url = f"https://www.kicker.de/bundesliga/spieltag/{saison}/{spieltag}"
     print(f"Lade Spieltag-Übersicht: {url}")
-    html = get_html(page, url)
+    html = get_html(page, url, wait_selector="a[href*='bundesliga']")
     soup = BeautifulSoup(html, "html.parser")
 
     links = []
     for a in soup.find_all("a", href=True):
         href = a["href"]
-        # Altes Format: /bundesliga/spieltag/.../schema oder /analyse
-        # Neues Format (ab 2026-27): /team1-gegen-team2-YYYY-bundesliga-ID/analyse
+        # Format 1: /bundesliga/spieltag/.../schema oder /analyse
+        # Format 2 (ab 2026-27): /team-gegen-team-YYYY-bundesliga-ID/analyse
+        # Format 3 (ab 2026-27): /team-gegen-team-YYYY-bundesliga-ID (ohne Suffix)
         if "/schema" in href or "/analyse" in href:
             href = href.replace("/analyse", "/schema")
             full = "https://www.kicker.de" + href if href.startswith("/") else href
             if full not in links:
                 links.append(full)
         elif re.search(r"-bundesliga-\d+/?$", href):
-            # Neues Format ohne /analyse-Suffix: direkt /schema anhängen
             href = href.rstrip("/")
             full = "https://www.kicker.de" + href if href.startswith("/") else href
             full = full + "/schema"
             if full not in links:
                 links.append(full)
+
+    # Debug: zeige alle gefundenen hrefs die 'bundesliga' enthalten
+    if not links:
+        bl_hrefs = [a["href"] for a in soup.find_all("a", href=True) if "bundesliga" in a["href"]]
+        print(f"  DEBUG: {len(bl_hrefs)} bundesliga-hrefs gefunden: {bl_hrefs[:5]}")
 
     print(f"  → {len(links)} Spiele gefunden")
     return links
