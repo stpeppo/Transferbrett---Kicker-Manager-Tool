@@ -239,9 +239,18 @@ def get_game_links(page, saison, spieltag):
     links = []
     for a in soup.find_all("a", href=True):
         href = a["href"]
+        # Altes Format: /bundesliga/spieltag/.../schema oder /analyse
+        # Neues Format (ab 2026-27): /team1-gegen-team2-YYYY-bundesliga-ID/analyse
         if "/schema" in href or "/analyse" in href:
             href = href.replace("/analyse", "/schema")
             full = "https://www.kicker.de" + href if href.startswith("/") else href
+            if full not in links:
+                links.append(full)
+        elif re.search(r"-bundesliga-\d+/?$", href):
+            # Neues Format ohne /analyse-Suffix: direkt /schema anhängen
+            href = href.rstrip("/")
+            full = "https://www.kicker.de" + href if href.startswith("/") else href
+            full = full + "/schema"
             if full not in links:
                 links.append(full)
 
