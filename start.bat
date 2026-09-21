@@ -20,6 +20,6 @@ if %ERRORLEVEL% == 0 (
 start "" "https://stpeppo.github.io/Transferbrett---Kicker-Manager-Tool/transferbrett.html"
 
 :: Alternativ: lokale Datei öffnen (Kommentar entfernen wenn kein GitHub Pages genutzt wird)
-:: start "" "%~dp0transferbrett.html"
+:: start "%~dp0transferbrett.html"
 
 exit /b
