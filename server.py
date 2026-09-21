@@ -88,7 +88,7 @@ def scrape():
         positions = load_player_positions(INTERACTIVE_CSV)
 
         with sync_playwright() as pw:
-            browser = pw.chromium.launch(headless=True)
+            browser = pw.chromium.launch(headless=False)
             context = browser.new_context(
                 locale="de-DE",
                 user_agent=(
