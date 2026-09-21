@@ -71,6 +71,15 @@ def get_html(page, url, wait_selector=None):
         except Exception:
             pass
     time.sleep(1.5)
+    # Cloudflare-Challenge erkennen und warten bis aufgelöst
+    for _ in range(10):
+        html = page.content()
+        if "data-cfasync" in html or "cmsg" in html and "<a " not in html:
+            print("  Cloudflare-Challenge erkannt, warte 3s ...")
+            time.sleep(3)
+            html = page.content()
+        else:
+            return html
     return page.content()
 
 
@@ -321,10 +330,14 @@ def main():
         )
         page = context.new_page()
 
-        # kicker.de Startseite zuerst laden
+        # kicker.de Startseite zuerst laden und Cloudflare passieren lassen
         print("Verbinde mit kicker.de ...")
         page.goto("https://www.kicker.de", wait_until="domcontentloaded", timeout=30000)
-        time.sleep(2)
+        for _ in range(8):
+            time.sleep(3)
+            if "data-cfasync" not in page.content():
+                break
+            print("  Cloudflare auf Startseite, warte ...")
 
         game_links = get_game_links(page, args.saison, args.spieltag)
         if not game_links:
