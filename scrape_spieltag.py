@@ -29,8 +29,18 @@ HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    )
+        "Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Referer": "https://www.google.de/",
+    "DNT": "1",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "cross-site",
 }
 
 # Punktekoeffizient pro Position
@@ -71,10 +81,14 @@ TEAM_NAMES = {
 }
 
 
+SESSION = requests.Session()
+SESSION.headers.update(HEADERS)
+
+
 def get_soup(url, retries=3):
     for attempt in range(retries):
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=15)
+            resp = SESSION.get(url, timeout=15)
             resp.raise_for_status()
             return BeautifulSoup(resp.text, "html.parser")
         except requests.RequestException as e:
@@ -102,6 +116,12 @@ def load_player_positions(interactive_csv_path):
 
 def get_game_links(saison, spieltag):
     """Holt alle Spiel-Links für einen Spieltag."""
+    # kicker.de Startseite zuerst besuchen (Cookie/Session aufbauen)
+    try:
+        SESSION.get("https://www.kicker.de", timeout=10)
+        time.sleep(1)
+    except Exception:
+        pass
     url = f"https://www.kicker.de/bundesliga/spieltag/{saison}/{spieltag}"
     print(f"Lade Spieltag-Übersicht: {url}")
     soup = get_soup(url)
@@ -376,8 +396,8 @@ def main():
     parser.add_argument("--saison", default="2025-26", help="Saison (z.B. 2025-26)")
     parser.add_argument(
         "--interactive",
-        default="data/2526/interactive_2526_2025_07_30.csv",
-        help="Pfad zur Interactive-Spielerliste (für Positionen)",
+        default=None,
+        help="Pfad zur Interactive-Spielerliste (für Positionen), z.B. interactive_2526.csv",
     )
     parser.add_argument("--output", default=None, help="Ausgabe-Dateiname (Standard: SpieltagN_Noten.csv)")
     args = parser.parse_args()
@@ -385,9 +405,13 @@ def main():
     output = args.output or f"Spieltag{args.spieltag}_Noten.csv"
     interactive_path = args.interactive
 
-    # Spielerpositionen laden
-    print(f"Lade Spielerpositionen aus: {interactive_path}")
-    positions = load_player_positions(interactive_path)
+    # Spielerpositionen laden (optional)
+    if interactive_path:
+        print(f"Lade Spielerpositionen aus: {interactive_path}")
+        positions = load_player_positions(interactive_path)
+    else:
+        print("Kein Interactive-CSV angegeben – Punkte ohne Positions-Koeffizient (FORWARD als Standard)")
+        positions = {}
     print(f"  → {len(positions)} Spieler geladen")
 
     # Spieltag scrapen
