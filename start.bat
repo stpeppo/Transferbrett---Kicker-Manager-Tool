@@ -15,11 +15,7 @@ if %ERRORLEVEL% == 0 (
     timeout /t 3 /nobreak >nul
 )
 
-:: Transferbrett im Standard-Browser öffnen
-:: GitHub Pages URL – passe sie ggf. an:
-start "" "https://stpeppo.github.io/Transferbrett---Kicker-Manager-Tool/transferbrett.html"
-
-:: Alternativ: lokale Datei öffnen (Kommentar entfernen wenn kein GitHub Pages genutzt wird)
-:: start "%~dp0transferbrett.html"
+:: Lokale Datei öffnen (hat den Scraper-Button)
+start "" "%~dp0transferbrett.html"
 
 exit /b
