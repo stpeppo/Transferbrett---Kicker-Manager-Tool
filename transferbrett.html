@@ -594,7 +594,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
           <select id="seasonMatchdaySelect"></select>
           <button class="btn small" id="seasonImportBtn" style="display:none;">Spieltag importieren</button>
-          <button class="btn small" id="scraperImportBtn" style="display:none;">⬇ Von kicker.de laden</button>
+          <button class="btn small" id="scraperImportBtn">⬇ Von kicker.de laden</button>
           <input type="file" id="seasonImportFile" accept=".csv,text/csv" style="display:none;">
           <button class="btn small primary" id="backToMainFromSeasonBtn">← Zurück zur Hauptseite</button>
         </div>
@@ -3430,7 +3430,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
     var importBtn = document.getElementById('seasonImportBtn');
     importBtn.style.display = amAdminNow ? '' : 'none';
-    document.getElementById('scraperImportBtn').style.display = amAdminNow ? '' : 'none';
+    // scraperImportBtn ist immer sichtbar; isAdmin()-Check erfolgt im Click-Handler
 
     document.getElementById('seasonTabTableBtn').classList.toggle('primary', seasonTab==='table' && !seasonSelectedTeamId);
     document.getElementById('seasonTabElfBtn').classList.toggle('primary', seasonTab==='elf' && !seasonSelectedTeamId);
