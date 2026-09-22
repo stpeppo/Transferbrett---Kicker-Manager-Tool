@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../ISlave"
+		},
+		{
+			"path": "../Tentacle"
+		},
+		{
+			"path": "../Tentacle/Tentacle-"
+		}
+	],
+	"settings": {}
+}

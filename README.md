@@ -1,8 +1,6 @@
 # Transferbrett – Projektuebergabe an Claude Code
 
-Auktions-Board fuer das kicker Managerspiel Classic. Bisher als claude.ai-
-Artefakt betrieben unter:
-https://claude.ai/code/artifact/6cf831ad-a35a-4c92-bbca-c08b9f1bbbdc
+Auktions-Board fuer das kicker Managerspiel Interactive. 
 
 ## Dateien
 
