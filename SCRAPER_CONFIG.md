@@ -8,8 +8,15 @@ Stand: 2026-09-21 | Zuletzt getestet mit: Spieltag 1, Saison 2026-27
 
 ```bash
 pip install flask flask-cors playwright beautifulsoup4
-playwright install chromium
+python -m playwright install chromium
 ```
+
+**Auf Firmen-Laptops (Firewall blockiert SSL-Zertifikate):**
+```powershell
+$env:NODE_OPTIONS="--use-system-ca"
+python -m playwright install chromium
+```
+Hinweis: `pip` und `playwright` direkt aufrufen schlägt auf Firmen-Rechnern fehl → immer `python -m pip` und `python -m playwright` verwenden.
 
 ## Starten
 
