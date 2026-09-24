@@ -159,9 +159,14 @@ def scrape_game(page, url, player_positions):
         if DEBUG_PLAYER:
             print(f"  DEBUG SdS: Fehler beim Laden von spielinfo: {e}")
 
+    # kicker.de liefert den Spieler-des-Spiels-Namen als "Nachname, Vorname"
+    # (z.B. "Petkov, Lukas"), die Startelf-Liste aber als "Initiale Nachname"
+    # (z.B. "L. Petkov") -- Abgleich über den Nachnamen-Teil vor dem Komma.
+    sds_surname = sds_name.split(",")[0].strip() if sds_name else None
+
     def make_player(name, status, grade, team, tga):
         pos = player_positions.get(name, "FORWARD")
-        is_sds = bool(sds_name and (name in sds_name or sds_name in name))
+        is_sds = bool(sds_surname) and name.strip().endswith(sds_surname)
         return {
             "Verein": team, "Status": "Start" if status == "start" else "Bank",
             "Spieler": name, "RoteKarte": 0, "GelbRoteKarte": 0,
@@ -229,11 +234,14 @@ def scrape_game(page, url, player_positions):
         scorer_el = row.select_one("[class*='substitutions--hide-mobile']")
         subtxt = (row.select_one("[class*='goals__player-subtxt']") or row).get_text()
         assist_els = row.select("[class*='assist__player']")
-        assist_name = assist_els[-1].get_text(strip=True) if assist_els else None
+        assist_name_raw = assist_els[-1].get_text(strip=True) if assist_els else None
+        # kicker.de stellt dem Namen die Schussart voran ("Linksschuss, Onyeka",
+        # "Rechtsschuss, L. Petkov") -- nur den Teil nach dem letzten Komma behalten.
+        assist_name = assist_name_raw.split(",")[-1].strip() if assist_name_raw else None
 
         if DEBUG_PLAYER and ((scorer_el and DEBUG_PLAYER in scorer_el.get_text(strip=True)) or (assist_name and DEBUG_PLAYER in assist_name)):
             scorer_dbg = scorer_el.get_text(strip=True) if scorer_el else None
-            print(f"  DEBUG Tor-Zeile: Torschütze='{scorer_dbg}' subtxt='{subtxt.strip()[:60]}' Vorlage='{assist_name}' assist_els_count={len(assist_els)} row-class='{row.get('class')}'")
+            print(f"  DEBUG Tor-Zeile: Torschütze='{scorer_dbg}' subtxt='{subtxt.strip()[:60]}' Vorlage(roh)='{assist_name_raw}' Vorlage(bereinigt)='{assist_name}' assist_els_count={len(assist_els)} row-class='{row.get('class')}'")
         if scorer_el:
             scorer = scorer_el.get_text(strip=True)
             if scorer in player_lookup and "Eigentor" not in subtxt:
