@@ -115,6 +115,9 @@ Entspricht kicker Interactive:
 | Clean Sheet (TW, nur Startelf) | +2 |
 | Rote Karte | -6 |
 | Gelb-Rote Karte | -3 |
+| Unbesetzte Formations-Position (weniger als 11 eigene Spieler kamen zum Einsatz) | -10 pro Position |
+
+Die -10-Punkte-Regel wird nicht vom Scraper geliefert, sondern automatisch im Tool berechnet (`teamMatchdayResult` in `transferbrett_template.html`): für jeden der 11 Formations-Plätze, der nicht mit einem tatsächlich eingesetzten eigenen Spieler besetzt werden kann, werden 10 Punkte abgezogen.
 
 ---
 

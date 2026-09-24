@@ -1256,8 +1256,12 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     POS_ORDER.forEach(function(pos){
       byPos[pos].forEach(function(entry, i){ (i < need[pos] ? starters : bench).push(entry); });
     });
-    var total = hasFormation ? starters.reduce(function(s,e){ return s+e.points; }, 0) : 0;
-    return {total: total, starters: starters, bench: bench, hasFormation: hasFormation};
+    var totalNeed = need.TW + need.ABW + need.MF + need.ST;
+    var filledSlots = starters.filter(function(e){ return e.played; }).length;
+    var emptySlots = hasFormation ? Math.max(0, totalNeed - filledSlots) : 0;
+    var penalty = emptySlots * 10;
+    var total = (hasFormation ? starters.reduce(function(s,e){ return s+e.points; }, 0) : 0) - penalty;
+    return {total: total, starters: starters, bench: bench, hasFormation: hasFormation, emptySlots: emptySlots, penalty: penalty};
   }
 
   function matchdayIdsSorted(){
@@ -3546,7 +3550,8 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       container.appendChild(warn);
     }
     var sub2 = document.createElement('div'); sub2.className='modal-sub'; sub2.style.marginBottom='12px';
-    sub2.textContent = 'Spieltag ' + seasonSelectedMatchday + ' · Formation ' + (team.formation||'–') + ' · Gesamt: ' + result.total + ' Punkte';
+    sub2.textContent = 'Spieltag ' + seasonSelectedMatchday + ' · Formation ' + (team.formation||'–') + ' · Gesamt: ' + result.total + ' Punkte'
+      + (result.penalty ? ' (davon ' + result.emptySlots + ' unbesetzte Position' + (result.emptySlots===1?'':'en') + ' à -10 = -' + result.penalty + ')' : '');
     container.appendChild(sub2);
 
     function buildRosterTable(title, entries, counted){
