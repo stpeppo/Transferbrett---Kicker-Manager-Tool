@@ -136,11 +136,15 @@ def scrape_game(page, url, player_positions):
     goals_home = goals_away = 0
     score_els = soup.select("div.kick__v100-scoreCell__scoreHolder span, div[class*='score']")
     nums = [el.get_text(strip=True) for el in score_els if re.match(r"^\d+$", el.get_text(strip=True))]
+    if DEBUG_PLAYER:
+        print(f"  DEBUG Ergebnis: {len(score_els)} score-Elemente, davon rein-numerisch: {nums}")
     if len(nums) >= 2:
         try:
             goals_home, goals_away = int(nums[0]), int(nums[1])
         except ValueError:
             pass
+    if DEBUG_PLAYER:
+        print(f"  DEBUG Ergebnis: goals_home={goals_home} goals_away={goals_away} (für Weiße-Weste-Berechnung)")
 
     # Spieler des Spiels
     sds_name = None
@@ -260,10 +264,14 @@ def scrape_game(page, url, player_positions):
     for sec in soup.select("[class*='data-grid__main']"):
         p_els = sec.select("[class*='substitutions__player']")
         icon_els = sec.select("[class*='icon-box']")
+        if DEBUG_PLAYER and p_els:
+            print(f"  DEBUG Karten: {len(p_els)} substitutions__player-Elemente: {[e.get_text(strip=True) for e in p_els]}, {len(icon_els)} icon-Elemente")
         for i, p_el in enumerate(p_els[::2]):
             name = p_el.get_text(strip=True)
             if i < len(icon_els):
                 box = str(icon_els[i])
+                if DEBUG_PLAYER and DEBUG_PLAYER in name:
+                    print(f"  DEBUG Karte: '{name}' icon-box='{box[:100]}'")
                 if "ticker-icon-array" in box or "GelbRot" in box:
                     if name in player_lookup:
                         player_lookup[name]["GelbRoteKarte"] = 1
