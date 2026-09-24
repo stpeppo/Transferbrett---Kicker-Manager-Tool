@@ -204,11 +204,15 @@ def scrape_game(page, url, player_positions):
     # Einwechslungen
     # WICHTIG: nicht über [class*='substitutions__team'] gehen -- dieser Selektor matcht
     # 10 Container pro Spiel (nicht 2), und Container[1] (das vermeintliche Auswärtsteam)
-    # ist dabei durchgehend leer. Die echten Auswärts-Einwechslungsdaten stecken in
-    # data-grid__main[1] (dieselben Container, die auch die Karten-Sektion nutzt).
-    sub_grid_sections = soup.select("[class*='data-grid__main']")
+    # ist dabei durchgehend leer. Auch data-grid__main[0]/[1] direkt per Index ist falsch --
+    # von den insgesamt ~12 data-grid__main-Containern sind die meisten leer (0 Spieler-
+    # Elemente), und die zwei mit echten Einwechslungsdaten stehen nicht zuverlässig an
+    # Position 0/1. Stattdessen: die ersten zwei Container filtern, die TATSÄCHLICH
+    # substitutions__player-Elemente enthalten.
+    all_grid_sections = soup.select("[class*='data-grid__main']")
+    sub_grid_sections = [sec for sec in all_grid_sections if sec.select("[class*='substitutions__player']")]
     if DEBUG_PLAYER:
-        print(f"  DEBUG Einwechslungen: {len(sub_grid_sections)} data-grid__main-Container gefunden")
+        print(f"  DEBUG Einwechslungen: {len(all_grid_sections)} data-grid__main-Container gesamt, {len(sub_grid_sections)} davon mit Spieler-Elementen")
     for si, (team, tga) in enumerate([(team_home, goals_away), (team_away, goals_home)]):
         if si >= len(sub_grid_sections):
             break
