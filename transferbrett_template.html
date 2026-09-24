@@ -1827,7 +1827,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     return {points: row.points, status: row.status, goals: row.goals, assists: row.assists, redCard: row.redCard, yellowRedCard: row.yellowRedCard, motm: row.motm};
   }
 
-  function openMatchdayImportModal(rows){
+  function openMatchdayImportModal(rows, preferredMd){
     var resolved = [], unresolved = [];
     rows.forEach(function(row){
       var m = findPlayerForMatchdayRow(row.club, row.name);
@@ -1847,7 +1847,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
     var mdLabel = document.createElement('label'); mdLabel.textContent = 'Spieltag-Nummer';
     var existingMd = matchdayIdsSorted().map(Number);
-    var nextMd = existingMd.length ? Math.max.apply(null, existingMd) + 1 : 1;
+    var nextMd = preferredMd || (existingMd.length ? Math.max.apply(null, existingMd) + 1 : 1);
     var mdInput = document.createElement('input'); mdInput.type='number'; mdInput.min='1'; mdInput.max='34'; mdInput.value=nextMd;
     mdInput.style.cssText='width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink); margin-bottom:14px;';
     modal.appendChild(mdLabel); modal.appendChild(mdInput);
@@ -1881,13 +1881,11 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var okBtn2 = document.createElement('button'); okBtn2.className='btn small primary'; okBtn2.textContent='Importieren';
     okBtn2.addEventListener('click', function(){
       var mdId = String(parseInt(mdInput.value,10) || nextMd);
+      if(STATE.matchdays[mdId] && !confirm('Spieltag ' + mdId + ' ist bereits importiert. Überschreiben?')) return;
       var players = {};
       exact.forEach(function(r){ players[r.player.id] = rowToMatchdayEntry(r.row); });
       fuzzyChecks.forEach(function(fc){ if(fc.cb.checked) players[fc.entry.player.id] = rowToMatchdayEntry(fc.entry.row); });
       var entry = {importedAt: Date.now(), players: players};
-      // Written straight to matchdaysRef (its own path, like presence) rather than through the
-      // general persist(): a concurrent unrelated edit from anyone else (formation, etc.) calling
-      // plain persist() around the same moment must never be able to overwrite this import.
       STATE.matchdays[mdId] = entry; // optimistic local update, confirmed by the listener echo below
       closeModal();
       seasonSelectedMatchday = mdId; seasonSelectedTeamId = null;
@@ -3497,7 +3495,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
           try{
             var rows = parseMatchdayCsv(csvText);
             if(!rows.length){ openInfoModal('Keine Spielerzeilen in den Scraped-Daten.', 'Import fehlgeschlagen'); return; }
-            openMatchdayImportModal(rows);
+            openMatchdayImportModal(rows, spieltag);
           } catch(e){
             openInfoModal('Fehler beim Verarbeiten: ' + (e && e.message || e), 'Import fehlgeschlagen');
           }
