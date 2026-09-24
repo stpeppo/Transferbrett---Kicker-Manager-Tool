@@ -599,6 +599,11 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
           <button class="btn small primary" id="backToMainFromSeasonBtn">← Zurück zur Hauptseite</button>
         </div>
       </div>
+      <div style="margin-bottom:14px;">
+        <input type="text" id="seasonPlayerSearch" placeholder="Spieler suchen…" autocomplete="off"
+          style="width:100%; max-width:320px; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink);">
+        <div id="seasonPlayerSearchResults"></div>
+      </div>
       <div style="display:flex; gap:8px; margin-bottom:14px;" id="seasonTabRow">
         <button class="btn small primary" id="seasonTabTableBtn" type="button">Tabelle</button>
         <button class="btn small" id="seasonTabElfBtn" type="button">Elf des Spieltags</button>
@@ -2952,6 +2957,29 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
 
   // Which team cards are maximized (per-browser display preference only, not synced/persisted).
   var expandedTeamIds = {};
+  // Sortierung je Team-Kader in der maximierten Ansicht (per-browser, nicht synced/persisted).
+  var teamSortBy = {};
+  var TEAM_SORT_OPTIONS = [
+    {key:'price', label:'Preis (absteigend)'},
+    {key:'name', label:'Name (A-Z)'},
+    {key:'position', label:'Position'},
+  ];
+  function sortTeamIds(ids, sortKey){
+    var sorted = ids.slice();
+    if(sortKey === 'name'){
+      sorted.sort(function(a,b){ var pa=PBY[a], pb=PBY[b]; return (pa?pa.n:'').localeCompare(pb?pb.n:''); });
+    } else if(sortKey === 'position'){
+      sorted.sort(function(a,b){
+        var pa=PBY[a], pb=PBY[b];
+        var oa = POS_ORDER.indexOf(pa?pa.p:''), ob = POS_ORDER.indexOf(pb?pb.p:'');
+        if(oa!==ob) return oa-ob;
+        return (pa?pa.n:'').localeCompare(pb?pb.n:'');
+      });
+    } else {
+      sorted.sort(function(a,b){ return STATE.purchases[b].price - STATE.purchases[a].price; });
+    }
+    return sorted;
+  }
 
   function renderTeamCard(team){
     var card = document.createElement('div'); card.className='team-card'; card.dataset.teamId=team.id;
@@ -3067,7 +3095,8 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     }
 
     var ids = purchasedIds().filter(function(pid){ return STATE.purchases[pid].teamId===team.id; });
-    ids.sort(function(a,b){ return STATE.purchases[b].price - STATE.purchases[a].price; });
+    var sortKey = teamSortBy[team.id] || 'price';
+    ids = sortTeamIds(ids, sortKey);
 
     var ptSum = ids.reduce(function(s,pid){ var p = PBY[pid]; return s + (p ? p.pt : 0); }, 0);
     var ptLine = document.createElement('div'); ptLine.className='budget-line';
@@ -3094,6 +3123,22 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       var hintEl = document.createElement('div'); hintEl.className='team-drop-hint'; hintEl.textContent='Spieler hierher ziehen';
       card.appendChild(hintEl);
     } else {
+      if(isExpanded){
+        var sortRow = document.createElement('div'); sortRow.style.cssText='display:flex; align-items:center; gap:6px; margin-bottom:4px;';
+        var sortLbl = document.createElement('span'); sortLbl.style.cssText='font-size:11px; color:var(--ink-dim);'; sortLbl.textContent='Sortierung:';
+        var sortSel = document.createElement('select'); sortSel.className='formation-select';
+        TEAM_SORT_OPTIONS.forEach(function(opt){
+          var o = document.createElement('option'); o.value=opt.key; o.textContent=opt.label;
+          sortSel.appendChild(o);
+        });
+        sortSel.value = sortKey;
+        sortSel.addEventListener('click', function(ev){ ev.stopPropagation(); });
+        sortSel.addEventListener('change', function(){
+          teamSortBy[team.id] = sortSel.value; render();
+        });
+        sortRow.appendChild(sortLbl); sortRow.appendChild(sortSel);
+        card.appendChild(sortRow);
+      }
       var list = document.createElement('div'); list.className='roster-list';
       ids.forEach(function(pid){
         var p = PBY[pid]; if(!p) return;
@@ -3461,6 +3506,49 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     }
   }
 
+  function renderSeasonPlayerSearchResults(query){
+    var box = document.getElementById('seasonPlayerSearchResults');
+    box.innerHTML = '';
+    query = (query || '').trim().toLowerCase();
+    if(!query) return;
+    var mdIds = matchdayIdsSorted();
+    var matches = purchasedIds()
+      .map(function(pid){ return {pid:pid, p:PBY[pid]}; })
+      .filter(function(e){ return e.p && e.p.n.toLowerCase().indexOf(query) !== -1; });
+    var list = document.createElement('div');
+    list.style.cssText = 'margin-top:8px; border:1px solid var(--line); border-radius:8px; overflow:hidden; max-width:480px;';
+    if(!matches.length){
+      var empty = document.createElement('div'); empty.style.cssText='padding:10px 12px; font-size:12.5px; color:var(--ink-dim);';
+      empty.textContent = 'Kein Spieler gefunden.';
+      list.appendChild(empty);
+    } else {
+      matches.forEach(function(e){
+        var pu = STATE.purchases[e.pid];
+        var team = STATE.teams.filter(function(t){ return t.id===pu.teamId; })[0];
+        var total = mdIds.reduce(function(s,mdId){ var md=STATE.matchdays[mdId]; return s + ((md && md.players[e.pid]) ? md.players[e.pid].points : 0); }, 0);
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 12px; cursor:pointer; border-top:1px solid var(--line);';
+        row.style.borderTop = '1px solid var(--line)';
+        row.addEventListener('mouseenter', function(){ row.style.background='var(--surface-alt)'; });
+        row.addEventListener('mouseleave', function(){ row.style.background=''; });
+        var left = document.createElement('div');
+        left.innerHTML = '<strong>' + e.p.n + '</strong> <span style="color:var(--ink-dim); font-size:12px;">' + e.p.c + ' · ' + (team ? team.name : '–') + '</span>';
+        var right = document.createElement('span'); right.className='num'; right.style.fontWeight='600';
+        right.textContent = total + ' Pkt';
+        row.appendChild(left); row.appendChild(right);
+        row.addEventListener('click', function(){
+          if(!team) return;
+          seasonSelectedTeamId = team.id; seasonTab='table';
+          document.getElementById('seasonPlayerSearch').value = '';
+          box.innerHTML = '';
+          render();
+        });
+        list.appendChild(row);
+      });
+    }
+    box.appendChild(list);
+  }
+
   function seasonBackLink(container, label, onClick){
     var back = document.createElement('button'); back.className='btn small'; back.style.marginBottom='12px'; back.textContent=label;
     back.addEventListener('click', onClick);
@@ -3791,6 +3879,9 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
   });
   document.getElementById('seasonMatchdaySelect').addEventListener('change', function(ev){
     seasonSelectedMatchday = ev.target.value; seasonSelectedTeamId = null; render();
+  });
+  document.getElementById('seasonPlayerSearch').addEventListener('input', function(ev){
+    renderSeasonPlayerSearchResults(ev.target.value);
   });
   document.getElementById('seasonTabTableBtn').addEventListener('click', function(){
     seasonTab = 'table'; seasonSelectedTeamId = null; render();

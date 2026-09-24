@@ -213,6 +213,13 @@ def scrape_game(page, url, player_positions):
     sub_grid_sections = [sec for sec in all_grid_sections if sec.select("[class*='substitutions__player']")]
     if DEBUG_PLAYER:
         print(f"  DEBUG Einwechslungen: {len(all_grid_sections)} data-grid__main-Container gesamt, {len(sub_grid_sections)} davon mit Spieler-Elementen")
+    # Wenn nur 1 Container mit Einwechslungen gefunden wird (das andere Team hat evtl.
+    # gar nicht gewechselt), ist per Positions-Reihenfolge nicht sicher zu sagen, ob das
+    # Heim- oder Auswärtsteam ist -- dann lieber gar nicht zuordnen als raten und riskieren,
+    # die Einwechslungen des falschen Teams zuzuschreiben.
+    if len(sub_grid_sections) == 1:
+        print(f"  WARNUNG: nur 1 Einwechslungs-Container gefunden (statt 2) -- kann Heim/Auswärts nicht sicher zuordnen, überspringe Einwechslungen für dieses Spiel.")
+        sub_grid_sections = []
     for si, (team, tga) in enumerate([(team_home, goals_away), (team_away, goals_home)]):
         if si >= len(sub_grid_sections):
             break
