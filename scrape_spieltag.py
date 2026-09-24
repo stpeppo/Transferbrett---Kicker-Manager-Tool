@@ -15,10 +15,16 @@ Benötigt:
 
 import argparse
 import csv
+import os
 import re
 import sys
 import time
 from pathlib import Path
+
+# Setze DEBUG_PLAYER=Nachname (env var) um für einen einzelnen Spieler den
+# rohen Scraper-Rohtext (Note, Tor-Zeilen) auf der Konsole mitzuloggen, z.B.:
+#   set DEBUG_PLAYER=Petkov & python scrape_spieltag.py --spieltag 1
+DEBUG_PLAYER = os.environ.get("DEBUG_PLAYER", "").strip()
 
 try:
     from bs4 import BeautifulSoup
@@ -169,11 +175,17 @@ def scrape_game(page, url, player_positions):
     for a in home_lineup:
         txt = a.get_text(strip=True)
         name = re.sub(r"[\d,\.]+$", "", txt).strip()
-        players.append(make_player(name, "start", parse_grade(txt), team_home, goals_away))
+        grade = parse_grade(txt)
+        if DEBUG_PLAYER and DEBUG_PLAYER in name:
+            print(f"  DEBUG Note: '{name}' Rohtext='{txt}' -> geparste Note={grade}")
+        players.append(make_player(name, "start", grade, team_home, goals_away))
     for a in away_lineup:
         txt = a.get_text(strip=True)
         name = re.sub(r"[\d,\.]+$", "", txt).strip()
-        players.append(make_player(name, "start", parse_grade(txt), team_away, goals_home))
+        grade = parse_grade(txt)
+        if DEBUG_PLAYER and DEBUG_PLAYER in name:
+            print(f"  DEBUG Note: '{name}' Rohtext='{txt}' -> geparste Note={grade}")
+        players.append(make_player(name, "start", grade, team_away, goals_home))
 
     player_lookup = {p["Spieler"]: p for p in players}
 
@@ -204,7 +216,10 @@ def scrape_game(page, url, player_positions):
             seen_bench.add(name)
 
     # Tore
-    for row in soup.select("[class*='goals__row']"):
+    goal_rows = soup.select("[class*='goals__row']")
+    if DEBUG_PLAYER:
+        print(f"  DEBUG Tore: {len(goal_rows)} goals__row-Elemente im HTML gefunden (jedes echte Tor sollte nur 1x auftauchen)")
+    for row in goal_rows:
         scorer_el = row.select_one("[class*='substitutions--hide-mobile']")
         subtxt = (row.select_one("[class*='goals__player-subtxt']") or row).get_text()
         assist_els = row.select("[class*='assist__player']")
@@ -212,6 +227,8 @@ def scrape_game(page, url, player_positions):
 
         if scorer_el:
             scorer = scorer_el.get_text(strip=True)
+            if DEBUG_PLAYER and DEBUG_PLAYER in scorer:
+                print(f"  DEBUG Tor-Zeile: Torschütze='{scorer}' subtxt='{subtxt.strip()[:60]}' Vorlage='{assist_name}' row-class='{row.get('class')}'")
             if scorer in player_lookup and "Eigentor" not in subtxt:
                 player_lookup[scorer]["Tore"] += 1
         if assist_name and assist_name in player_lookup:
