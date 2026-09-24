@@ -153,8 +153,11 @@ def scrape_game(page, url, player_positions):
             if el:
                 sds_name = el.get_text(strip=True)
                 break
-    except Exception:
-        pass
+        if DEBUG_PLAYER:
+            print(f"  DEBUG SdS: spielinfo_url={spielinfo_url} -> gefundener Name='{sds_name}'")
+    except Exception as e:
+        if DEBUG_PLAYER:
+            print(f"  DEBUG SdS: Fehler beim Laden von spielinfo: {e}")
 
     def make_player(name, status, grade, team, tga):
         pos = player_positions.get(name, "FORWARD")
@@ -205,6 +208,9 @@ def scrape_game(page, url, player_positions):
     # Bank (kein Einsatz)
     bench_sections = soup.select("[class*='reservebank'] div.kick__lineup-text a, "
                                   "[class*='bench'] div.kick__lineup-text a")
+    if DEBUG_PLAYER:
+        bench_container_count = len(soup.select("[class*='reservebank'], [class*='bench']"))
+        print(f"  DEBUG Bank: {bench_container_count} Bank-Container, {len(bench_sections)} Bank-Spieler-Elemente gefunden: {[a.get_text(strip=True) for a in bench_sections]}")
     seen_bench = set()
     for a in bench_sections:
         name = a.get_text(strip=True)
@@ -225,10 +231,11 @@ def scrape_game(page, url, player_positions):
         assist_els = row.select("[class*='assist__player']")
         assist_name = assist_els[-1].get_text(strip=True) if assist_els else None
 
+        if DEBUG_PLAYER and ((scorer_el and DEBUG_PLAYER in scorer_el.get_text(strip=True)) or (assist_name and DEBUG_PLAYER in assist_name)):
+            scorer_dbg = scorer_el.get_text(strip=True) if scorer_el else None
+            print(f"  DEBUG Tor-Zeile: Torschütze='{scorer_dbg}' subtxt='{subtxt.strip()[:60]}' Vorlage='{assist_name}' assist_els_count={len(assist_els)} row-class='{row.get('class')}'")
         if scorer_el:
             scorer = scorer_el.get_text(strip=True)
-            if DEBUG_PLAYER and DEBUG_PLAYER in scorer:
-                print(f"  DEBUG Tor-Zeile: Torschütze='{scorer}' subtxt='{subtxt.strip()[:60]}' Vorlage='{assist_name}' row-class='{row.get('class')}'")
             if scorer in player_lookup and "Eigentor" not in subtxt:
                 player_lookup[scorer]["Tore"] += 1
         if assist_name and assist_name in player_lookup:
