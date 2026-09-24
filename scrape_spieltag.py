@@ -199,14 +199,21 @@ def scrape_game(page, url, player_positions):
 
     # Einwechslungen
     sub_sections = soup.select("[class*='substitutions__team']")
+    if DEBUG_PLAYER:
+        print(f"  DEBUG Einwechslungen: {len(sub_sections)} substitutions__team-Container gefunden")
     for si, (team, tga) in enumerate([(team_home, goals_away), (team_away, goals_home)]):
         if si >= len(sub_sections):
             break
         player_els = sub_sections[si].select("[class*='substitutions__player']")
+        if DEBUG_PLAYER:
+            print(f"  DEBUG Einwechslungen ({team}): {len(player_els)} substitutions__player-Elemente: {[e.get_text(strip=True) for e in player_els]}")
         for i in range(0, len(player_els), 2):
             txt = player_els[i].get_text(strip=True)
             name = re.sub(r"[\d,\.]+$", "", txt).strip()
-            p = make_player(name, "sub", parse_grade(txt), team, tga)
+            grade = parse_grade(txt)
+            if DEBUG_PLAYER and DEBUG_PLAYER in name:
+                print(f"  DEBUG Note (Einwechslung): '{name}' Rohtext='{txt}' -> geparste Note={grade}")
+            p = make_player(name, "sub", grade, team, tga)
             players.append(p)
             player_lookup[name] = p
 
