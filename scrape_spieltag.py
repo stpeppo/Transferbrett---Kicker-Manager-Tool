@@ -202,18 +202,30 @@ def scrape_game(page, url, player_positions):
     player_lookup = {p["Spieler"]: p for p in players}
 
     # Einwechslungen
-    sub_sections = soup.select("[class*='substitutions__team']")
+    # WICHTIG: nicht über [class*='substitutions__team'] gehen -- dieser Selektor matcht
+    # 10 Container pro Spiel (nicht 2), und Container[1] (das vermeintliche Auswärtsteam)
+    # ist dabei durchgehend leer. Die echten Auswärts-Einwechslungsdaten stecken in
+    # data-grid__main[1] (dieselben Container, die auch die Karten-Sektion nutzt).
+    sub_grid_sections = soup.select("[class*='data-grid__main']")
     if DEBUG_PLAYER:
-        print(f"  DEBUG Einwechslungen: {len(sub_sections)} substitutions__team-Container gefunden")
+        print(f"  DEBUG Einwechslungen: {len(sub_grid_sections)} data-grid__main-Container gefunden")
     for si, (team, tga) in enumerate([(team_home, goals_away), (team_away, goals_home)]):
-        if si >= len(sub_sections):
+        if si >= len(sub_grid_sections):
             break
-        player_els = sub_sections[si].select("[class*='substitutions__player']")
+        player_els = sub_grid_sections[si].select("[class*='substitutions__player']")
         if DEBUG_PLAYER:
-            print(f"  DEBUG Einwechslungen ({team}): {len(player_els)} substitutions__player-Elemente: {[e.get_text(strip=True) for e in player_els]}")
-        for i in range(0, len(player_els), 2):
-            txt = player_els[i].get_text(strip=True)
+            print(f"  DEBUG Einwechslungen ({team}): {len(player_els)} Elemente: {[e.get_text(strip=True) for e in player_els]}")
+        for el in player_els:
+            txt = el.get_text(strip=True)
             name = re.sub(r"[\d,\.]+$", "", txt).strip()
+            if not name:
+                continue
+            if name in player_lookup:
+                # Bereits als Startelf-Spieler erfasst -- das ist der Ausgewechselte,
+                # nicht überschreiben (sonst geht seine echte Startelf-Note verloren).
+                if DEBUG_PLAYER and DEBUG_PLAYER in name:
+                    print(f"  DEBUG Einwechslung: '{name}' bereits in Startelf, übersprungen (ausgewechselter Spieler)")
+                continue
             grade = parse_grade(txt)
             if DEBUG_PLAYER and DEBUG_PLAYER in name:
                 print(f"  DEBUG Note (Einwechslung): '{name}' Rohtext='{txt}' -> geparste Note={grade}")
