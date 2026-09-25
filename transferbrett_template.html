@@ -881,10 +881,13 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
       var e = md && md.players[pid];
       byPos[p.p].push({playerId:pid, player:p, points: e ? e.points : 0, played: !!e, status: e ? e.status : null});
     });
-    // Bei Punktegleichstand zählt ein tatsächlich eingesetzter Spieler vor einem nicht eingesetzten
-    // (sonst könnte ein 0-Punkte-Nichteinsatz einen 0-Punkte-Einsatz aus dem Slot verdrängen und die
-    // Position fälschlich als unbesetzt gewertet werden).
-    POS_ORDER.forEach(function(pos){ byPos[pos].sort(function(a,b){ return (b.points-a.points) || ((b.played?1:0)-(a.played?1:0)); }); });
+    // Ein tatsächlich eingesetzter Spieler zählt IMMER vor einem nicht eingesetzten, unabhängig vom
+    // Punktwert -- ein Spieler mit -2 Punkten (wirklich gespielt) füllt den Formations-Platz, ein
+    // Spieler mit 0 Punkten (nicht eingesetzt) tut das nicht (sonst würde ein 0-Punkte-Nichteinsatz
+    // einen Spieler mit Minuspunkten aus dem Slot verdrängen und die Position fälschlich als
+    // unbesetzt (-10) gewertet, obwohl ein Ersatzspieler bereitstand). Erst bei gleichem
+    // Einsatz-Status entscheidet die Punktzahl.
+    POS_ORDER.forEach(function(pos){ byPos[pos].sort(function(a,b){ return ((b.played?1:0)-(a.played?1:0)) || (b.points-a.points); }); });
     var hasFormation = !!(team.formation && FORMATION_BY_KEY[team.formation]);
     var need = {TW:1, ABW:0, MF:0, ST:0};
     if(hasFormation){
