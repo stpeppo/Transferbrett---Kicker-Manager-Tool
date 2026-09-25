@@ -2246,6 +2246,38 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     return {points: row.points, status: row.status, goals: row.goals, assists: row.assists, redCard: row.redCard, yellowRedCard: row.yellowRedCard, motm: row.motm};
   }
 
+  // Vergleicht den bisherigen Datenstand eines Spieltags mit den neu importierten Werten, damit
+  // nach einem Re-Import sichtbar ist, ob sich überhaupt etwas geändert hat (statt blind "X Spieler
+  // importiert" zu melden, das bei jedem Import gleich aussieht -- egal ob neue Daten drinstecken).
+  function diffMatchdayImport(oldEntry, newPlayers){
+    var oldPlayers = (oldEntry && oldEntry.players) || {};
+    var allIds = {}; Object.keys(oldPlayers).forEach(function(id){ allIds[id]=1; }); Object.keys(newPlayers).forEach(function(id){ allIds[id]=1; });
+    var added = [], changed = [], removed = [], unchanged = 0;
+    Object.keys(allIds).forEach(function(pid){
+      var o = oldPlayers[pid], n = newPlayers[pid];
+      var name = (PBY[pid] && PBY[pid].n) || pid;
+      if(o && !n){ removed.push(name + ' (war: ' + o.points + ' Pkt)'); }
+      else if(!o && n){ added.push(name + ' (' + n.points + ' Pkt)'); }
+      else if(o.points !== n.points){ changed.push(name + ': ' + o.points + ' → ' + n.points + ' Pkt'); }
+      else { unchanged++; }
+    });
+    return {added: added, changed: changed, removed: removed, unchanged: unchanged};
+  }
+
+  function formatMatchdayDiff(diff, wasFirstImport){
+    if(wasFirstImport) return null; // beim allerersten Import gibt es nichts zu vergleichen
+    var lines = [];
+    if(!diff.added.length && !diff.changed.length && !diff.removed.length){
+      lines.push('Keine Änderungen gegenüber dem bisherigen Stand -- gleicher Datenstand wie vorher.');
+    } else {
+      lines.push(diff.added.length + ' neu, ' + diff.changed.length + ' geändert, ' + diff.removed.length + ' entfernt, ' + diff.unchanged + ' unverändert.');
+      if(diff.added.length) lines.push('\nNeu:\n' + diff.added.slice(0,15).join('\n') + (diff.added.length>15?'\n… und ' + (diff.added.length-15) + ' weitere':''));
+      if(diff.changed.length) lines.push('\nGeändert:\n' + diff.changed.slice(0,15).join('\n') + (diff.changed.length>15?'\n… und ' + (diff.changed.length-15) + ' weitere':''));
+      if(diff.removed.length) lines.push('\nEntfernt:\n' + diff.removed.slice(0,15).join('\n') + (diff.removed.length>15?'\n… und ' + (diff.removed.length-15) + ' weitere':''));
+    }
+    return lines.join('\n');
+  }
+
   function openMatchdayImportModal(rows, preferredMd){
     var resolved = [], unresolved = [];
     rows.forEach(function(row){
@@ -2300,23 +2332,27 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     var okBtn2 = document.createElement('button'); okBtn2.className='btn small primary'; okBtn2.textContent='Importieren';
     okBtn2.addEventListener('click', function(){
       var mdId = String(parseInt(mdInput.value,10) || nextMd);
-      if(STATE.matchdays[mdId] && !confirm('Spieltag ' + mdId + ' ist bereits importiert. Überschreiben?')) return;
+      var oldEntry = STATE.matchdays[mdId];
+      if(oldEntry && !confirm('Spieltag ' + mdId + ' ist bereits importiert. Überschreiben?')) return;
       var players = {};
       exact.forEach(function(r){ players[r.player.id] = rowToMatchdayEntry(r.row); });
       fuzzyChecks.forEach(function(fc){ if(fc.cb.checked) players[fc.entry.player.id] = rowToMatchdayEntry(fc.entry.row); });
+      var diff = diffMatchdayImport(oldEntry, players);
+      var diffText = formatMatchdayDiff(diff, !oldEntry);
       var entry = {importedAt: Date.now(), players: players};
       STATE.matchdays[mdId] = entry; // optimistic local update, confirmed by the listener echo below
       closeModal();
       seasonSelectedMatchday = mdId; seasonSelectedTeamId = null;
       render(); saveLocal();
+      var baseMsg = 'Spieltag ' + mdId + ' importiert: ' + Object.keys(players).length + ' Spieler.' + (diffText ? '\n\n' + diffText : '');
       if(matchdaysRef && firebaseConnected){
         matchdaysRef.child(mdId).set(entry).then(function(){
-          openInfoModal('Spieltag ' + mdId + ' importiert: ' + Object.keys(players).length + ' Spieler.', 'Import erfolgreich');
+          openInfoModal(baseMsg, 'Import erfolgreich');
         }).catch(function(error){
           openInfoModal('Online-Speichern fehlgeschlagen (' + (error && (error.code||error.message)||'unbekannt') + '), nur lokal gesichert.', 'Import teilweise fehlgeschlagen');
         });
       } else {
-        openInfoModal('Spieltag ' + mdId + ' importiert (lokal, keine Verbindung): ' + Object.keys(players).length + ' Spieler.', 'Import erfolgreich (offline)');
+        openInfoModal('Spieltag ' + mdId + ' importiert (lokal, keine Verbindung): ' + Object.keys(players).length + ' Spieler.' + (diffText ? '\n\n' + diffText : ''), 'Import erfolgreich (offline)');
       }
     });
     actions2.appendChild(cancelBtn); actions2.appendChild(okBtn2);
