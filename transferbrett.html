@@ -361,7 +361,7 @@ tbody tr.is-new td:first-child{box-shadow:inset 3px 0 0 var(--new);}
   width:100%; max-width:340px; padding:18px 18px 16px;
 }
 .modal h3{font-family:"Oswald", sans-serif; font-size:16px; margin:0 0 3px; font-weight:600;}
-.modal .modal-sub{font-size:12px; color:var(--ink-dim); margin-bottom:14px;}
+.modal .modal-sub{font-size:12px; color:var(--ink-dim); margin-bottom:14px; white-space:pre-line;}
 .modal label{display:block; font-size:11.5px; font-weight:600; color:var(--ink-dim); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.03em;}
 .modal select, .modal input{
   width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--surface-alt); margin-bottom:12px;
@@ -479,6 +479,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
         <h2>Teams</h2>
         <div style="display:flex; gap:8px;">
           <button class="btn small danger" id="resetBtn" style="display:none;">Zurücksetzen</button>
+          <button class="btn small" id="mergeDuplicatesBtn" style="display:none;">Custom-Duplikate bereinigen</button>
           <button class="btn small primary" id="addTeamBtn">+ Team hinzufügen</button>
         </div>
       </div>
@@ -1179,6 +1180,40 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     if(na && nb && (na.indexOf(nb)!==-1 || nb.indexOf(na)!==-1)) return true;
     var la = lastToken(a), lb = lastToken(b);
     return !!la && la === lb;
+  }
+
+  // Custom-Spieler (manuell über "+ Spieler" angelegt), die inzwischen auch offiziell mit eigener
+  // ID in BASE_PLAYERS stehen (z.B. weil kicker Interactive sie nach einem DB-Update aufgenommen
+  // hat). Solche Duplikate führen dazu, dass Spieltag-Importe der offiziellen ID Punkte geben, die
+  // beim Team (das den Custom-Eintrag besitzt) nie ankommen. Namensvergleich ist wortordnungs-
+  // unabhängig, da Custom-Einträge z.B. "Nachname Vorname" statt "Vorname Nachname" nutzen können.
+  function normNameForDupeCheck(n){ return (n||'').toLowerCase().split(/\s+/).filter(Boolean).sort().join(' '); }
+  function findCustomPlayerDuplicates(){
+    var customs = STATE.customPlayers || [];
+    var out = [];
+    customs.forEach(function(cp){
+      var official = BASE_PLAYERS.find(function(op){
+        return normNameForDupeCheck(op.n) === normNameForDupeCheck(cp.n) && op.c === cp.c;
+      });
+      if(official) out.push({custom: cp, official: official});
+    });
+    return out;
+  }
+
+  function mergeCustomPlayerDuplicates(){
+    var dupes = findCustomPlayerDuplicates();
+    if(!dupes.length) return;
+    dupes.forEach(function(d){
+      var pu = STATE.purchases[d.custom.id];
+      if(pu){
+        STATE.purchases[d.official.id] = pu;
+        delete STATE.purchases[d.custom.id];
+      }
+      STATE.customPlayers = STATE.customPlayers.filter(function(cp){ return cp.id !== d.custom.id; });
+      // Undo-Verlauf, der die alte Custom-ID referenziert, bleibt als historischer Eintrag stehen --
+      // nur der aktive Kauf wird migriert, nicht die Historie umgeschrieben.
+    });
+    render(); persist();
   }
 
   // Returns {player, confidence:'exact'|'exact-other-club'|'fuzzy'} or null if no safe match exists.
@@ -3779,6 +3814,7 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     document.getElementById('addTeamBtn').disabled = !amAdminNow || normalChangesLocked();
     document.getElementById('addTeamBtn').style.visibility = amAdminNow ? '' : 'hidden';
     document.getElementById('resetBtn').style.display = (amAdminNow && !normalChangesLocked()) ? '' : 'none';
+    document.getElementById('mergeDuplicatesBtn').style.display = (amAdminNow && !normalChangesLocked() && findCustomPlayerDuplicates().length>0) ? '' : 'none';
     document.getElementById('addPlayerBtn').style.display = (amAdminNow && !normalChangesLocked()) ? '' : 'none';
 
     // bulk team select
@@ -3982,6 +4018,21 @@ footer.credit{margin-top:26px; font-size:11px; color:var(--ink-dim); text-align:
     document.getElementById('modalRoot').appendChild(backdrop);
   });
 
+  document.getElementById('mergeDuplicatesBtn').addEventListener('click', function(){
+    if(!isAdmin()) return;
+    var dupes = findCustomPlayerDuplicates();
+    if(!dupes.length){ openInfoModal('Keine Duplikate gefunden.', 'Custom-Duplikate bereinigen'); return; }
+    var lines = dupes.map(function(d){
+      var pu = STATE.purchases[d.custom.id];
+      var team = pu ? STATE.teams.filter(function(t){ return t.id===pu.teamId; })[0] : null;
+      return '"' + d.custom.n + '" (' + d.custom.c + ') → ' + d.official.n + (team ? ', Besitzer: ' + team.name : ', nicht gekauft');
+    });
+    openConfirmModal(
+      dupes.length + ' Duplikat(e) gefunden, die auf die offizielle Spieler-ID umgezogen werden:\n\n' + lines.join('\n') +
+      '\n\nKäufe (Team, Preis) bleiben erhalten, nur die ID wird korrigiert. Fortfahren?',
+      function(){ mergeCustomPlayerDuplicates(); openInfoModal(dupes.length + ' Duplikat(e) bereinigt.', 'Custom-Duplikate bereinigen'); }
+    );
+  });
   document.getElementById('resetBtn').addEventListener('click', function(){
     if(!isAdmin()) return;
     openResetModal();
