@@ -1,21 +1,21 @@
 Verein;Status;Spieler;Punkte;RoteKarte;GelbRoteKarte;Vorlagen;Tore;SpielerDesSpiels
-FC Bayern München;Start;Neuer;10;0;0;0;0;0
+FC Bayern München;Start;Neuer;12;0;0;0;0;0
 FC Bayern München;Start;Stanisic;8;0;0;0;0;0
 FC Bayern München;Start;Upamecano;8;0;0;0;0;0
 FC Bayern München;Start;Tah;10;0;0;0;0;0
-FC Bayern München;Start;Davies;10;0;0;0;0;0
+FC Bayern München;Start;Davies;14;0;0;2;0;0
 FC Bayern München;Start;Kimmich;10;0;0;0;0;0
 FC Bayern München;Start;Pavlovic;10;0;0;0;0;0
-FC Bayern München;Start;Olise;26;0;0;0;3;1
-FC Bayern München;Start;Musiala;13;0;0;0;1;0
+FC Bayern München;Start;Olise;30;0;0;2;3;1
+FC Bayern München;Start;Musiala;16;0;0;1;1;0
 FC Bayern München;Start;Luis Diaz;4;0;0;0;0;0
 FC Bayern München;Start;Kane;16;0;0;0;2;0
 FC Bayern München;Bank;M.-J. Kim;6;0;0;0;0;0
 FC Bayern München;Bank;Saibari;11;0;0;0;1;0
-FC Bayern München;Bank;Bischof;8;0;0;0;0;0
+FC Bayern München;Bank;Bischof;12;0;0;2;0;0
 FC Bayern München;Bank;Gnabry;2;0;0;0;0;0
 FC Bayern München;Bank;Brown;2;0;0;0;0;0
-FC Bayern München;Teampunkte;;154;;;;;
+FC Bayern München;Teampunkte;;171;;;;;
 1. FC Union Berlin;Start;Rönnow;0;0;0;0;0;0
 1. FC Union Berlin;Start;Trimmel;-2;0;0;0;0;0
 1. FC Union Berlin;Start;Querfeld;-6;0;0;0;0;0
@@ -30,12 +30,12 @@ FC Bayern München;Teampunkte;;154;;;;;
 1. FC Union Berlin;Teampunkte;;-42;;;;;
 Eintracht Frankfurt;Start;Atubolu;4;0;0;0;0;0
 Eintracht Frankfurt;Start;Baum;-2;0;0;0;0;0
-Eintracht Frankfurt;Start;R. Koch;0;0;0;0;0;0
+Eintracht Frankfurt;Start;R. Koch;2;0;0;1;0;0
 Eintracht Frankfurt;Start;Brassier;6;0;0;0;0;0
 Eintracht Frankfurt;Start;Kosugi;4;0;0;0;0;0
 Eintracht Frankfurt;Start;Onyedika;2;0;0;0;0;0
 Eintracht Frankfurt;Start;Aseko;0;0;0;0;0;0
-Eintracht Frankfurt;Start;Doan;6;0;0;0;0;0
+Eintracht Frankfurt;Start;Doan;8;0;0;1;0;0
 Eintracht Frankfurt;Start;Uzun;4;0;0;0;0;0
 Eintracht Frankfurt;Start;Ebnoutalib;9;0;0;0;1;0
 Eintracht Frankfurt;Start;Burkardt;13;0;0;0;1;0
@@ -44,19 +44,19 @@ Eintracht Frankfurt;Bank;Collins;4;0;0;0;0;0
 Eintracht Frankfurt;Bank;Knauff;4;0;0;0;0;0
 Eintracht Frankfurt;Bank;M. Götze;2;0;0;0;0;0
 Eintracht Frankfurt;Bank;Amaimouni-Echghouyab;2;0;0;0;0;0
-Eintracht Frankfurt;Teampunkte;;54;;;;;
+Eintracht Frankfurt;Teampunkte;;58;;;;;
 SC Freiburg;Start;Backhaus;6;0;0;0;0;0
 SC Freiburg;Start;Treu;6;0;0;0;0;0
 SC Freiburg;Start;Ginter;8;0;0;0;0;0
 SC Freiburg;Start;Lienhart;6;0;0;0;0;0
-SC Freiburg;Start;Makengo;6;0;0;0;0;0
+SC Freiburg;Start;Makengo;8;0;0;1;0;0
 SC Freiburg;Start;M. Eggestein;4;0;0;0;0;0
 SC Freiburg;Start;Engelhardt;6;0;0;0;0;0
 SC Freiburg;Start;Beste;4;0;0;0;0;0
-SC Freiburg;Start;Y. Suzuki;11;0;0;0;1;0
-SC Freiburg;Start;Scherhant;18;0;0;0;1;1
+SC Freiburg;Start;Y. Suzuki;12;0;0;0;1;0
+SC Freiburg;Start;Scherhant;20;0;0;1;1;1
 SC Freiburg;Start;Matanovic;6;0;0;0;0;0
-SC Freiburg;Teampunkte;;81;;;;;
+SC Freiburg;Teampunkte;;86;;;;;
 Borussia Mönchengladbach;Start;Nicolas;4;0;0;0;0;0
 Borussia Mönchengladbach;Start;Diks;-2;0;0;0;0;0
 Borussia Mönchengladbach;Start;Leszczynski;2;0;0;0;0;0
@@ -64,30 +64,30 @@ Borussia Mönchengladbach;Start;Itakura;-2;0;0;0;0;0
 Borussia Mönchengladbach;Start;Scally;0;0;0;0;0;0
 Borussia Mönchengladbach;Start;Bolin;2;0;0;0;0;0
 Borussia Mönchengladbach;Start;Sander;4;0;0;0;0;0
-Borussia Mönchengladbach;Start;Ullrich;4;0;0;0;0;0
+Borussia Mönchengladbach;Start;Ullrich;8;0;0;2;0;0
 Borussia Mönchengladbach;Start;Honorat;0;0;0;0;0;0
-Borussia Mönchengladbach;Start;Neuhaus;11;0;0;0;1;0
+Borussia Mönchengladbach;Start;Neuhaus;12;0;0;0;1;0
 Borussia Mönchengladbach;Start;Lidberg;5;0;0;0;1;0
 Borussia Mönchengladbach;Bank;Mohya;0;0;0;0;0;0
 Borussia Mönchengladbach;Bank;Hashioka;2;0;0;0;0;0
 Borussia Mönchengladbach;Bank;Stöger;2;0;0;0;0;0
 Borussia Mönchengladbach;Bank;Hack;2;0;0;0;0;0
 Borussia Mönchengladbach;Bank;Machino;5;0;0;0;1;0
-Borussia Mönchengladbach;Teampunkte;;39;;;;;
+Borussia Mönchengladbach;Teampunkte;;44;;;;;
 1. FSV Mainz 05;Start;Schwolow;8;0;0;0;0;0
 1. FSV Mainz 05;Start;Posch;6;0;0;0;0;0
 1. FSV Mainz 05;Start;Gruber;4;0;0;0;0;0
 1. FSV Mainz 05;Start;Potulski;2;0;0;0;0;0
-1. FSV Mainz 05;Start;Caci;4;0;0;0;0;0
-1. FSV Mainz 05;Start;Kai. Sano;8;0;0;0;0;0
+1. FSV Mainz 05;Start;Caci;6;0;0;1;0;0
+1. FSV Mainz 05;Start;Kai. Sano;10;0;0;1;0;0
 1. FSV Mainz 05;Start;Mwene;-2;0;0;0;0;0
 1. FSV Mainz 05;Start;Amiri;4;0;0;0;0;0
 1. FSV Mainz 05;Start;J.-S. Lee;-2;0;0;0;0;0
-1. FSV Mainz 05;Start;Becker;18;0;0;0;1;1
+1. FSV Mainz 05;Start;Becker;20;0;0;1;1;1
 1. FSV Mainz 05;Start;P. Tietz;5;0;0;0;1;0
-1. FSV Mainz 05;Teampunkte;;55;;;;;
+1. FSV Mainz 05;Teampunkte;;61;;;;;
 Hamburger SV;Start;Heuer Fernandes;10;0;0;0;0;0
-Hamburger SV;Start;Capaldo;18;0;0;0;1;1
+Hamburger SV;Start;Capaldo;20;0;0;0;1;1
 Hamburger SV;Start;Torunarigha;10;0;0;0;0;0
 Hamburger SV;Start;Omari;2;0;0;0;0;0
 Hamburger SV;Start;El Ouahdi;6;0;0;0;0;0
@@ -95,26 +95,26 @@ Hamburger SV;Start;Sambi Lokonga;6;0;0;0;0;0
 Hamburger SV;Start;Remberg;6;0;0;0;0;0
 Hamburger SV;Start;Wolfe;8;0;0;0;0;0
 Hamburger SV;Start;Fabio Vieira;2;0;0;0;0;0
-Hamburger SV;Start;Grönbaek;8;0;0;0;0;0
+Hamburger SV;Start;Grönbaek;12;0;0;2;0;0
 Hamburger SV;Start;Moffi;-2;0;0;0;0;0
 Hamburger SV;Bank;Poulsen;11;0;0;0;1;0
 Hamburger SV;Bank;Daka;2;0;0;0;0;0
 Hamburger SV;Bank;Lemke;2;0;0;0;0;0
 Hamburger SV;Bank;Jatta;2;0;0;0;0;0
 Hamburger SV;Bank;Adeline;2;0;0;0;0;0
-Hamburger SV;Teampunkte;;93;;;;;
+Hamburger SV;Teampunkte;;99;;;;;
 1. FC Köln;Start;Schwäbe;2;0;0;0;0;0
 1. FC Köln;Start;Castro-Montes;4;0;0;0;0;0
 1. FC Köln;Start;Simpson-Pusey;0;0;0;0;0;0
 1. FC Köln;Start;Lochoshvili;0;0;0;0;0;0
 1. FC Köln;Start;Mensah;4;0;0;0;0;0
 1. FC Köln;Start;Krauß;2;0;0;0;0;0
-1. FC Köln;Start;Skhiri;4;0;0;0;0;0
+1. FC Köln;Start;Skhiri;6;0;0;1;0;0
 1. FC Köln;Start;Maina;2;0;0;0;0;0
 1. FC Köln;Start;Moore;4;0;0;0;0;0
 1. FC Köln;Start;S. El Mala;4;0;0;0;0;0
 1. FC Köln;Start;Dallinga;0;0;0;0;0;0
-1. FC Köln;Teampunkte;;26;;;;;
+1. FC Köln;Teampunkte;;28;;;;;
 SV Werder Bremen;Start;Hein;6;0;0;0;0;0
 SV Werder Bremen;Start;Arthur;6;0;0;0;0;0
 SV Werder Bremen;Start;Pieper;6;0;0;0;0;0
@@ -122,27 +122,27 @@ SV Werder Bremen;Start;Friedl;4;0;0;0;0;0
 SV Werder Bremen;Start;Deman;2;0;0;0;0;0
 SV Werder Bremen;Start;Regeer;8;0;0;0;0;0
 SV Werder Bremen;Start;Reis;6;0;0;0;0;0
-SV Werder Bremen;Start;Chuki;6;0;0;0;0;0
+SV Werder Bremen;Start;Chuki;8;0;0;1;0;0
 SV Werder Bremen;Start;Dinkci;2;0;0;0;0;0
-SV Werder Bremen;Start;Grüll;20;0;0;0;1;1
+SV Werder Bremen;Start;Grüll;24;0;0;2;1;1
 SV Werder Bremen;Start;Füllkrug;13;0;0;0;1;0
-SV Werder Bremen;Bank;Weiser;5;0;0;0;1;0
+SV Werder Bremen;Bank;Weiser;6;0;0;0;1;0
 SV Werder Bremen;Bank;Musah;2;0;0;0;0;0
 SV Werder Bremen;Bank;Wojcik;2;0;0;0;0;0
 SV Werder Bremen;Bank;Schmetgens;2;0;0;0;0;0
-SV Werder Bremen;Teampunkte;;90;;;;;
+SV Werder Bremen;Teampunkte;;97;;;;;
 FC Augsburg;Start;Dahmen;10;0;0;0;0;0
 FC Augsburg;Start;Banks;-2;0;0;0;0;0
 FC Augsburg;Start;Matsima;6;0;0;0;0;0
-FC Augsburg;Start;Brackelmann;11;0;0;0;1;0
+FC Augsburg;Start;Brackelmann;13;0;0;0;1;0
 FC Augsburg;Start;M. Wolf;2;0;0;0;0;0
 FC Augsburg;Start;Massengo;2;0;0;0;0;0
-FC Augsburg;Start;Rieder;6;0;0;0;0;0
+FC Augsburg;Start;Rieder;8;0;0;1;0;0
 FC Augsburg;Start;Behrens;0;0;0;0;0;0
-FC Augsburg;Start;Fellhauer;9;0;0;0;1;0
+FC Augsburg;Start;Fellhauer;10;0;0;0;1;0
 FC Augsburg;Start;Kömür;-2;0;0;0;0;0
 FC Augsburg;Start;Gregoritsch;2;0;0;0;0;0
-FC Augsburg;Teampunkte;;44;;;;;
+FC Augsburg;Teampunkte;;49;;;;;
 VfB Stuttgart;Start;Bredlow;6;0;0;0;0;0
 VfB Stuttgart;Start;Jeltsch;2;0;0;0;0;0
 VfB Stuttgart;Start;Chabot;8;0;0;0;0;0
@@ -159,7 +159,7 @@ VfB Stuttgart;Bank;Pejcinovic;-2;0;0;0;0;0
 VfB Stuttgart;Bank;Sauer;2;0;0;0;0;0
 VfB Stuttgart;Bank;Nartey;2;0;0;0;0;0
 VfB Stuttgart;Teampunkte;;36;;;;;
-Borussia Dortmund;Start;Kobel;8;0;0;0;0;0
+Borussia Dortmund;Start;Kobel;10;0;0;0;0;0
 Borussia Dortmund;Start;Gadou;2;0;0;0;0;0
 Borussia Dortmund;Start;Anton;13;0;0;0;0;1
 Borussia Dortmund;Start;N. Schlotterbeck;8;0;0;0;0;0
@@ -170,12 +170,12 @@ Borussia Dortmund;Start;Svensson;6;0;0;0;0;0
 Borussia Dortmund;Start;Nwaneri;0;0;0;0;0;0
 Borussia Dortmund;Start;Beier;9;0;0;0;1;0
 Borussia Dortmund;Start;Guirassy;2;0;0;0;0;0
-Borussia Dortmund;Teampunkte;;70;;;;;
-Bayer 04 Leverkusen;Start;Flekken;10;0;0;0;0;0
+Borussia Dortmund;Teampunkte;;72;;;;;
+Bayer 04 Leverkusen;Start;Flekken;12;0;0;0;0;0
 Bayer 04 Leverkusen;Start;Quansah;6;0;0;0;0;0
 Bayer 04 Leverkusen;Start;Tapsoba;8;0;0;0;0;0
 Bayer 04 Leverkusen;Start;Medina;10;0;0;0;0;0
-Bayer 04 Leverkusen;Start;Miguel;18;0;0;0;1;1
+Bayer 04 Leverkusen;Start;Miguel;22;0;0;1;1;1
 Bayer 04 Leverkusen;Start;E. Fernandez;6;0;0;0;0;0
 Bayer 04 Leverkusen;Start;Aleix Garcia;8;0;0;0;0;0
 Bayer 04 Leverkusen;Start;Diaby;6;0;0;0;0;0
@@ -185,7 +185,7 @@ Bayer 04 Leverkusen;Start;Schick;11;0;0;0;1;0
 Bayer 04 Leverkusen;Bank;Andrich;2;0;0;0;0;0
 Bayer 04 Leverkusen;Bank;Kofane;2;0;0;0;0;0
 Bayer 04 Leverkusen;Bank;Vazquez;2;0;0;0;0;0
-Bayer 04 Leverkusen;Teampunkte;;97;;;;;
+Bayer 04 Leverkusen;Teampunkte;;103;;;;;
 RB Leipzig;Start;Vandevoordt;4;0;0;0;0;0
 RB Leipzig;Start;R. Baku;2;0;0;0;0;0
 RB Leipzig;Start;Orban;0;0;0;0;0;0
@@ -198,7 +198,7 @@ RB Leipzig;Start;Nkunku;2;0;0;0;0;0
 RB Leipzig;Start;Nusa;6;0;0;0;0;0
 RB Leipzig;Start;Romulo;2;0;0;0;0;0
 RB Leipzig;Teampunkte;;32;;;;;
-FC Schalke 04;Start;Karius;6;0;0;0;0;0
+FC Schalke 04;Start;Karius;8;0;0;0;0;0
 FC Schalke 04;Start;T. Becker;4;0;0;0;0;0
 FC Schalke 04;Start;Katic;6;0;0;0;0;0
 FC Schalke 04;Start;Kurucay;13;0;0;0;0;1
@@ -214,8 +214,8 @@ FC Schalke 04;Bank;Wöber;0;0;0;0;0;0
 FC Schalke 04;Bank;V. Becker;2;0;0;0;0;0
 FC Schalke 04;Bank;H.-C. Hwang;2;0;0;0;0;0
 FC Schalke 04;Bank;Schallenberg;2;0;0;0;0;0
-FC Schalke 04;Teampunkte;;59;;;;;
-SV Elversberg;Start;Kristof;6;0;0;0;0;0
+FC Schalke 04;Teampunkte;;61;;;;;
+SV Elversberg;Start;Kristof;8;0;0;0;0;0
 SV Elversberg;Start;Gyamerah;2;0;0;0;0;0
 SV Elversberg;Start;Pinckert;8;0;0;0;0;0
 SV Elversberg;Start;Rohr;8;0;0;0;0;0
@@ -226,24 +226,24 @@ SV Elversberg;Start;L. Petkov;2;0;0;0;0;0
 SV Elversberg;Start;Darvich;0;0;0;0;0;0
 SV Elversberg;Start;Campbell;4;0;0;0;0;0
 SV Elversberg;Start;Mokwa;2;0;0;0;0;0
-SV Elversberg;Teampunkte;;46;;;;;
+SV Elversberg;Teampunkte;;48;;;;;
 SC Paderborn 07;Start;Noll;8;0;0;0;0;0
 SC Paderborn 07;Start;ter Horst;6;0;0;0;0;0
 SC Paderborn 07;Start;Scheller;8;0;0;0;0;0
 SC Paderborn 07;Start;Hansen;4;0;0;0;0;0
-SC Paderborn 07;Start;Curda;8;0;0;0;0;0
-SC Paderborn 07;Start;Castaneda;11;0;0;0;1;0
+SC Paderborn 07;Start;Curda;10;0;0;1;0;0
+SC Paderborn 07;Start;Castaneda;12;0;0;0;1;0
 SC Paderborn 07;Start;Obermair;4;0;0;0;0;0
 SC Paderborn 07;Start;Ulrich;13;0;0;0;0;1
 SC Paderborn 07;Start;Vidovic;2;0;0;0;0;0
 SC Paderborn 07;Start;Pieringer;4;0;0;0;0;0
 SC Paderborn 07;Start;Marino;11;0;0;0;1;0
 SC Paderborn 07;Bank;S. Tigges;11;0;0;0;1;0
-SC Paderborn 07;Bank;Sticker;6;0;0;0;0;0
+SC Paderborn 07;Bank;Sticker;8;0;0;1;0;0
 SC Paderborn 07;Bank;Philippe;2;0;0;0;0;0
 SC Paderborn 07;Bank;Baack;2;0;0;0;0;0
 SC Paderborn 07;Bank;Götze;2;0;0;0;0;0
-SC Paderborn 07;Teampunkte;;102;;;;;
+SC Paderborn 07;Teampunkte;;107;;;;;
 TSG Hoffenheim;Start;Baumann;6;0;0;0;0;0
 TSG Hoffenheim;Start;Coufal;2;0;0;0;0;0
 TSG Hoffenheim;Start;Kabak;0;0;0;0;0;0
@@ -254,5 +254,5 @@ TSG Hoffenheim;Start;Burger;2;0;0;0;0;0
 TSG Hoffenheim;Start;Conté;6;0;0;0;0;0
 TSG Hoffenheim;Start;Daghim;11;0;0;0;1;0
 TSG Hoffenheim;Start;Hlozek;2;0;0;0;0;0
-TSG Hoffenheim;Start;Moerstedt;4;0;0;0;0;0
-TSG Hoffenheim;Teampunkte;;27;;;;;
+TSG Hoffenheim;Start;Moerstedt;6;0;0;1;0;0
+TSG Hoffenheim;Teampunkte;;29;;;;;
