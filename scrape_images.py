@@ -48,24 +48,43 @@ def normalize_url(raw):
 
 
 def fetch_html(url, use_browser):
+    """Liefert (html, final_url, netzwerk_bild_urls). Netzwerk-URLs nur mit Browser."""
     if not use_browser:
         r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "de-DE,de;q=0.9"}, timeout=30)
         r.raise_for_status()
-        return r.text, r.url
+        return r.text, r.url, []
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
         sys.exit("Playwright fehlt:\n  python -m pip install playwright\n  python -m playwright install chromium")
+    net = []
+
+    def on_response(resp):
+        try:
+            ct = resp.headers.get("content-type", "").lower()
+            if resp.request.resource_type == "image" or ct.startswith("image/"):
+                net.append(resp.url)
+        except Exception:
+            pass
+
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=False)
-        page = browser.new_context(user_agent=UA, locale="de-DE").new_page()
-        page.goto(url, wait_until="networkidle", timeout=45000)
-        # Lazy-Loading auslösen
-        page.evaluate("async()=>{for(let y=0;y<document.body.scrollHeight;y+=600){"
-                      "window.scrollTo(0,y);await new Promise(r=>setTimeout(r,150));}}")
+        page = browser.new_context(user_agent=UA, locale="de-DE", viewport={"width": 1400, "height": 900}).new_page()
+        page.on("response", on_response)
+        page.goto(url, wait_until="networkidle", timeout=60000)
+        page.wait_for_timeout(3000)
+        # Fenster und alle scrollbaren Container nach unten scrollen (Lazy-Loading / Galerien)
+        for _ in range(25):
+            page.evaluate("""()=>{
+                window.scrollBy(0, 800);
+                document.querySelectorAll('*').forEach(e=>{
+                    if(e.scrollHeight>e.clientHeight+50 && /(auto|scroll)/.test(getComputedStyle(e).overflowY)) e.scrollTop+=800;
+                });}""")
+            page.wait_for_timeout(500)
+        page.wait_for_load_state("networkidle")
         html, final = page.content(), page.url
         browser.close()
-    return html, final
+    return html, final, net
 
 
 def best_from_srcset(srcset):
@@ -88,8 +107,10 @@ def extract_image_urls(html, base):
     found = []
 
     def add(u):
-        if u and not u.startswith(("data:", "javascript:", "#")):
-            found.append(urljoin(base, u.strip()))
+        if u:
+            full = urljoin(base, u.strip())
+            if full.startswith(("http://", "https://")):
+                found.append(full)
 
     for img in soup.find_all("img"):
         for attr in ("src", "data-src", "data-lazy-src", "data-original"):
@@ -150,8 +171,9 @@ def main():
     out = Path(args.out or f"bilder_{host}")
 
     print(f"Lade {url} ...")
-    html, final_url = fetch_html(url, args.browser)
+    html, final_url, net_urls = fetch_html(url, args.browser)
     urls = extract_image_urls(html, final_url)
+    urls += [u for u in dict.fromkeys(net_urls) if u not in set(urls) and u.startswith(("http://", "https://"))]
     print(f"{len(urls)} Bild-URLs gefunden.")
     if not urls:
         print("Nichts gefunden. Bei JavaScript-Seiten --browser versuchen.")
